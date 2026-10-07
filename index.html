@@ -530,3 +530,28 @@ $("admGlobalAdd").onclick = async () => {
 $("admGlobalSub").onclick = async () => {
   const s = await getDocs(collection(db,"users"));
   for (const d of s.docs) {
+    await updateDoc(d.ref, { cash: Math.max(0,(d.data().cash||0) - 1000) });
+  }
+  tgLog(`🌍 <b>GLOBAL -1000 TL</b> (${s.size} oyuncu)`);
+  toast("Global -1000 TL uygulandı"); loadAdminPanel();
+};
+$("admResetMarket").onclick = async () => {
+  const prices = {}; COINS.forEach(c => prices[c] = BASE_PRICE[c]);
+  await updateDoc(doc(db,"market","global"), { prices, updatedAt: Date.now() });
+  tgLog(`📊 <b>MARKET SIFIRLANDI</b>`);
+  toast("Market sıfırlandı"); refreshAll();
+};
+$("admRefresh").onclick = () => loadAdminPanel();
+$("admTestTg").onclick = () => tgLog(`🧪 Test mesajı - ${new Date().toLocaleString("tr-TR")}`);
+
+setInterval(async () => {
+  if (!uid()) return;
+  const ref = doc(db, "users", uid());
+  const snap = await getDoc(ref); const d = snap.data();
+  if (!d) return;
+  await updateDoc(ref, { energy: Math.min(100, (d.energy||0)+5) });
+  await refreshAll();
+}, 60000);
+</script>
+</body>
+</html>
