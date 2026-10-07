@@ -34,14 +34,12 @@
   .loginBox{position:relative;width:100%;max-width:400px;background:linear-gradient(180deg,rgba(20,20,35,0.95),rgba(15,15,25,0.95));border:1px solid #2a2a44;border-radius:16px;padding:32px 26px;box-shadow:0 20px 60px rgba(0,0,0,0.7)}
   .loginBox h1{color:#7fd1ff;letter-spacing:8px;font-size:22px;text-align:center;margin-bottom:6px}
   .loginBox .subtitle{color:#556080;font-size:11px;text-align:center;letter-spacing:2px;margin-bottom:24px}
-  .tabrow{display:flex;gap:6px;margin-bottom:20px;background:#0a0a15;padding:4px;border-radius:8px;border:1px solid #1e1e30}
-  .tabrow .tab{flex:1;padding:10px;text-align:center;font-size:12px;color:#556080;cursor:pointer;border-radius:6px;font-weight:600}
-  .tabrow .tab.active{background:linear-gradient(135deg,#1c2a4a,#253558);color:#7fd1ff}
   .field{margin-bottom:14px}
   .field label{display:block;font-size:10px;color:#7a8598;letter-spacing:1.5px;margin-bottom:6px;text-transform:uppercase}
-  .field input{width:100%;padding:12px 14px;background:#0d0d18;color:#e0e0e0;border:1px solid #24243a;border-radius:8px;font-size:13px;outline:none}
-  .field input:focus{border-color:#7fd1ff}
+  .field input{width:100%;padding:12px 14px;background:#0d0d18;color:#e0e0e0;border:1px solid #24243a;border-radius:8px;font-size:13px;outline:none;text-align:center;letter-spacing:2px}
+  .field input:focus{border-color:#7fd1ff;box-shadow:0 0 0 3px rgba(127,209,255,0.1)}
   .primaryBtn{width:100%;padding:13px;margin-top:8px;border:none;cursor:pointer;background:linear-gradient(135deg,#2a4a7a,#1e3a5a);color:#fff;font-size:13px;letter-spacing:2px;font-weight:700;border-radius:8px}
+  .primaryBtn:hover{background:linear-gradient(135deg,#3a5a9a,#2a4a7a)}
   #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:linear-gradient(135deg,#1a1a2e,#252540);border:1px solid #3a3a55;padding:12px 24px;font-size:13px;color:#fff;border-radius:10px;opacity:0;transition:.3s;pointer-events:none;z-index:400;max-width:90vw;text-align:center}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   #modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
@@ -93,14 +91,11 @@
   <div class="loginBox">
     <h1>SURVIVAL TYCOON</h1>
     <div class="subtitle">EKONOMİ • HAYATTA KALMA • SUÇ</div>
-    <div class="tabrow">
-      <div class="tab active" id="tabLogin">GİRİŞ YAP</div>
-      <div class="tab" id="tabRegister">KAYIT OL</div>
+    <div class="field">
+      <label>ŞİFRE</label>
+      <input id="inpPass" type="password" placeholder="••••••••" autocomplete="off" />
     </div>
-    <div class="field"><label>KULLANICI ADI</label><input id="inpEmail" type="text" placeholder="kullanici_adi" /></div>
-    <div class="field"><label>ŞİFRE</label><input id="inpPass" type="password" placeholder="••••••••" /></div>
-    <div class="field" id="fieldPass2" style="display:none"><label>ŞİFRE TEKRAR</label><input id="inpPass2" type="password" placeholder="••••••••" /></div>
-    <button class="primaryBtn" id="btnSubmit">GİRİŞ YAP</button>
+    <button class="primaryBtn" id="btnLogin">GİRİŞ YAP</button>
   </div>
 </div>
 
@@ -169,7 +164,6 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -178,22 +172,21 @@ const firebaseConfig = {
   projectId: "survival-ycn",
   storageBucket: "survival-ycn.firebasestorage.app",
   messagingSenderId: "718596663493",
-  appId: "1:718596663493:web:1edf6e1531afa4bda668ac",
-  measurementId: "G-VCD05CGM81"
+  appId: "1:718596663493:web:1edf6e1531afa4bda668ac"
 };
 
 const TG_TOKEN = "8600556676:AAFc6dqxJpHnNbhdYBkf7QBmLINUs86J-sI";
 const TG_CHAT = "8788868439";
 
-const PRESET_USERS = {
-  "Fc7mur":{email:"fc7mur@survival-tycoon.local",pass:"bayskral",admin:false},
-  "Yourtkedi":{email:"yourtkedi@survival-tycoon.local",pass:"12345ali6789",admin:false},
-  "Datrox":{email:"datrox@survival-tycoon.local",pass:"cekmece13",admin:false},
-  "72ADMIN":{email:"admin@survival-tycoon.local",pass:"72ADMIN",admin:true}
+/* ŞİFRE → HESAP EŞLEŞMESİ */
+const PASSWORD_MAP = {
+  "bayskral":    { user: "Fc7mur",    uid: "preset_fc7mur",    admin: false },
+  "12345ali6789":{ user: "Yourtkedi", uid: "preset_yourtkedi", admin: false },
+  "cekmece13":   { user: "Datrox",    uid: "preset_datrox",    admin: false },
+  "72ADMIN":     { user: "ADMIN",     uid: "preset_admin",     admin: true  }
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
 const COINS = ["BTC","ETH","SOL","BNB","XRP","ADA","DOGE","AVAX","DOT","LINK"];
@@ -267,8 +260,7 @@ const CRIMES = [
   {id:"banka",name:"Banka Soygunu",icon:"🏦",requires:["avtufegi","ak47"],plans:[
     {name:"Gece arka kapı",min:10000,max:20000,risk:0.50,jail:20},
     {name:"Müşteri kılığı",min:20000,max:40000,risk:0.65,jail:25},
-    {name:"Silahlı baskın",min:40000,max:70000,risk:0.85,jail:30},
-    {name:"İçeriden adam",min:70000,max:120000,risk:0.70,jail:30,bribe:20000}]},
+    {name:"Silahlı baskın",min:40000,max:70000,risk:0.85,jail:30}]},
   {id:"kumarhane",name:"Kumarhane Soygunu",icon:"🎰",requires:["ak47","kacisArabasi"],plans:[
     {name:"Rulet hilesi",min:15000,max:30000,risk:0.55,jail:20},
     {name:"Kasa baskını",min:30000,max:60000,risk:0.75,jail:28},
@@ -276,8 +268,7 @@ const CRIMES = [
   {id:"adam",name:"Adam Kaçırma",icon:"👤",requires:["ak47","kacisArabasi","maske"],plans:[
     {name:"Sıradan iş adamı",min:20000,max:45000,risk:0.60,jail:25},
     {name:"Zengin iş adamı",min:45000,max:100000,risk:0.75,jail:30},
-    {name:"Mafya babası",min:100000,max:200000,risk:0.90,jail:30},
-    {name:"Siyasetçi",min:200000,max:400000,risk:0.95,jail:30}]}
+    {name:"Mafya babası",min:100000,max:200000,risk:0.90,jail:30}]}
 ];
 
 const ASSETS = [
@@ -296,8 +287,10 @@ const ASSETS = [
 const DETECTIVE_COST = 100000;
 const $ = id => document.getElementById(id);
 const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
-const uid = () => auth.currentUser ? auth.currentUser.uid : null;
-let isAdmin=false, mode="login", jailInterval=null, hideInterval=null, currentUserData=null, allPlayers=[];
+let currentUid=null, currentUserData=null, isAdmin=false;
+let jailInterval=null, hideInterval=null, allPlayers=[];
+
+const uid = () => currentUid;
 
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3500)}
 function log(msg){const b=$("logBox");if(!b)return;const l=document.createElement("div");l.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`;l.style.padding="2px 0";b.prepend(l);if(b.childNodes.length>50)b.removeChild(b.lastChild)}
@@ -325,8 +318,7 @@ function openModal(title,sub,plans,onPick){
       ${p.min!==undefined?`💰 ${p.min.toLocaleString()}-${p.max.toLocaleString()} TL<br>`:""}
       ${p.risk!==undefined?`⚠️ Risk %${Math.round(p.risk*100)}<br>`:""}
       ${p.jail!==undefined?`🔒 Hapis ${p.jail} dk<br>`:""}
-      ${p.desc?`📌 ${p.desc}`:""}
-      ${p.bribe?`<br>💸 Ön ödeme ${p.bribe.toLocaleString()} TL`:""}</div>`;
+      ${p.desc?`📌 ${p.desc}`:""}</div>`;
     d.onclick=()=>{closeModal();onPick(p)};
     box.appendChild(d);
   });
@@ -336,139 +328,69 @@ function closeModal(){$("modalOverlay").classList.remove("show")}
 $("modalCancel").onclick=closeModal;
 $("modalOverlay").onclick=e=>{if(e.target===$("modalOverlay"))closeModal()};
 
-$("complaintSend").onclick=async()=>{
-  try{
-    const tip=$("complaintType").value,text=$("complaintText").value.trim();
-    if(!text)return toast("Mesaj boş.");
-    const u=auth.currentUser;
-    const name=u?.displayName||u?.email?.split("@")[0]||"?";
-    await tgLog(`📮 <b>${tip.toUpperCase()}</b>\n👤 ${name}\n\n💬 ${text}`);
-    $("complaintText").value="";
-    toast("✅ İletildi.");
-  }catch(e){toast("Hata: "+e.message)}
-};
-
-$("tabLogin").onclick=()=>{mode="login";$("tabLogin").classList.add("active");$("tabRegister").classList.remove("active");$("fieldPass2").style.display="none";$("btnSubmit").textContent="GİRİŞ YAP"};
-$("tabRegister").onclick=()=>{mode="register";$("tabRegister").classList.add("active");$("tabLogin").classList.remove("active");$("fieldPass2").style.display="block";$("btnSubmit").textContent="KAYIT OL"};
-
-async function tryPresetLogin(user,pass){
-  const preset=PRESET_USERS[user];
-  if(!preset)return false;
-  if(preset.pass!==pass)return false;
-  try{await signInWithEmailAndPassword(auth,preset.email,pass)}
-  catch(e){
-    if(e.code==="auth/user-not-found"||e.code==="auth/invalid-credential"){
-      try{
-        const cred=await createUserWithEmailAndPassword(auth,preset.email,pass);
-        await updateProfile(cred.user,{displayName:user});
-      }catch(e2){toast("Hesap oluşturulamadı: "+e2.message);return false}
-    }else{toast("Giriş: "+e.message);return false}
-  }
-  isAdmin=preset.admin;
-  if(preset.admin)tgLog(`🔐 <b>ADMIN GİRİŞİ</b>`);
-  return true;
-}
-
-$("btnSubmit").onclick=async()=>{
-  try{
-    const input=$("inpEmail").value.trim();
-    const pass=$("inpPass").value;
-    if(!input||!pass)return toast("Doldur.");
-    if(mode==="login"){
-      const presetOk=await tryPresetLogin(input,pass);
-      if(presetOk)return;
-      const email=input.includes("@")?input:input+"@survival-tycoon.local";
-      try{await signInWithEmailAndPassword(auth,email,pass)}
-      catch(e){
-        let msg=e.message;
-        if(e.code==="auth/user-not-found")msg="Kullanıcı yok.";
-        if(e.code==="auth/wrong-password"||e.code==="auth/invalid-credential")msg="Şifre yanlış.";
-        toast("Giriş: "+msg);
-      }
-      return;
-    }
-    if(!input.includes("@"))return toast("Gerçek e-posta gir.");
-    const p2=$("inpPass2").value;
-    if(pass!==p2)return toast("Şifreler uyuşmuyor.");
-    if(pass.length<6)return toast("Min 6 karakter.");
-    try{
-      const cred=await createUserWithEmailAndPassword(auth,input,pass);
-      await updateProfile(cred.user,{displayName:input.split("@")[0]});
-      toast("Kayıt başarılı!");
-    }catch(e){
-      let msg=e.message;
-      if(e.code==="auth/email-already-in-use")msg="Bu e-posta kayıtlı.";
-      toast("Kayıt: "+msg);
-    }
-  }catch(e){toast("Hata: "+e.message)}
-};
-$("inpPass").addEventListener("keypress",e=>{if(e.key==="Enter")$("btnSubmit").click()});
-$("inpPass2").addEventListener("keypress",e=>{if(e.key==="Enter")$("btnSubmit").click()});
-
-$("logoutBtn").onclick=()=>{
-  isAdmin=false;
-  $("adminPanel").style.display="none";
-  $("jailBanner").classList.remove("show");
-  $("hideBanner").classList.remove("show");
-  if(jailInterval)clearInterval(jailInterval);
-  if(hideInterval)clearInterval(hideInterval);
-  signOut(auth);
-};
-
-onAuthStateChanged(auth,async(user)=>{
-  try{
-    if(user){
-      $("loginScreen").hidden=true;$("topbar").hidden=false;$("panels").hidden=false;
-      const name=user.displayName||user.email.split("@")[0];
-      $("userInfo").textContent=name+(isAdmin?" ⚡":"");
-      await ensureUserDoc(user);
-      const snap=await getDoc(doc(db,"users",user.uid));
-      const d=snap.data();currentUserData=d;
-      if(d?.banned){
-        document.body.innerHTML=`<div style="padding:60px 30px;text-align:center;color:#e53935;font-family:monospace;background:#0a0a12;min-height:100vh"><h1>🚫 BANLANDI</h1></div>`;
-        return;
-      }
-      await refreshAll();
-      log("Giriş: "+name);
-      startJailCheck();
-      startHideCheck();
-      if(d?.isAdmin||isAdmin){
-        $("adminPanel").style.display="block";
-        loadAdminPanel();
-      }
-    }else{
-      $("loginScreen").hidden=false;$("topbar").hidden=true;$("panels").hidden=true;
-      $("adminPanel").style.display="none";
-      $("jailBanner").classList.remove("show");
-      $("hideBanner").classList.remove("show");
-      if(jailInterval)clearInterval(jailInterval);
-      if(hideInterval)clearInterval(hideInterval);
-      currentUserData=null;
-    }
-  }catch(e){alert("AUTH: "+e.message)}
-});
-
-async function ensureUserDoc(user){
-  const ref=doc(db,"users",user.uid);
+/* GİRİŞ */
+$("btnLogin").onclick=async()=>{
+  const pass=$("inpPass").value.trim();
+  if(!pass)return toast("Şifre gir.");
+  const entry=PASSWORD_MAP[pass];
+  if(!entry)return toast("❌ Şifre yanlış.");
+  
+  currentUid=entry.uid;
+  isAdmin=entry.admin;
+  
+  // Firestore'da kullanıcı dökümanı var mı?
+  const ref=doc(db,"users",entry.uid);
   const snap=await getDoc(ref);
   if(!snap.exists()){
-    const isPresetAdmin=Object.values(PRESET_USERS).some(p=>p.email===user.email&&p.admin);
-    const init={
-      name:user.displayName||user.email.split("@")[0],
-      email:user.email||"",
+    await setDoc(ref,{
+      name:entry.user,email:entry.uid+"@survival.local",
       cash:500,debt:0,age:18,health:50,maxHealth:50,energy:100,
       wanted:0,jailUntil:0,banned:false,createdAt:Date.now(),
-      assets:[],portfolio:{},inventory:{},isAdmin:isPresetAdmin,
+      assets:[],portfolio:{},inventory:{},isAdmin:entry.admin,
       lastIncome:Date.now(),lastHealthTick:Date.now(),
       hiding:false,hidingUntil:0,hidingIn:"",
       notifications:[]
-    };
-    await setDoc(ref,init);
-    await tgLog(`🆕 <b>YENİ HESAP</b>\n👤 ${init.name}\n📧 <code>${init.email}</code>${isPresetAdmin?"\n👑 ADMIN":""}`);
-    log("Hesap: "+init.name);
+    });
+    await tgLog(`🆕 <b>YENİ HESAP</b>\n👤 ${entry.user}${entry.admin?"\n👑 ADMIN":""}`);
   }
-}
+  const s2=await getDoc(ref);
+  if(s2.data()?.banned){
+    document.body.innerHTML=`<div style="padding:60px 30px;text-align:center;color:#e53935;font-family:monospace;background:#0a0a12;min-height:100vh"><h1>🚫 BANLANDI</h1></div>`;
+    return;
+  }
+  
+  $("loginScreen").hidden=true;
+  $("topbar").hidden=false;
+  $("panels").hidden=false;
+  $("userInfo").textContent=entry.user+(isAdmin?" ⚡":"");
+  
+  if(isAdmin)tgLog(`🔐 <b>ADMIN GİRİŞİ</b>`);
+  log("Giriş: "+entry.user);
+  
+  await refreshAll();
+  startJailCheck();
+  startHideCheck();
+  if(isAdmin){
+    $("adminPanel").style.display="block";
+    loadAdminPanel();
+  }
+};
+$("inpPass").addEventListener("keypress",e=>{if(e.key==="Enter")$("btnLogin").click()});
 
+$("logoutBtn").onclick=()=>{
+  currentUid=null;currentUserData=null;isAdmin=false;
+  $("loginScreen").hidden=false;
+  $("topbar").hidden=true;
+  $("panels").hidden=true;
+  $("adminPanel").style.display="none";
+  $("jailBanner").classList.remove("show");
+  $("hideBanner").classList.remove("show");
+  $("inpPass").value="";
+  if(jailInterval)clearInterval(jailInterval);
+  if(hideInterval)clearInterval(hideInterval);
+};
+
+/* YARDIMCI FONKSİYONLAR */
 async function getMarket(){
   const ref=doc(db,"market","global");
   const snap=await getDoc(ref);
@@ -483,9 +405,9 @@ async function getMarket(){
 function startJailCheck(){
   if(jailInterval)clearInterval(jailInterval);
   jailInterval=setInterval(async()=>{
+    if(!currentUid)return;
     try{
-      const u=uid();if(!u)return;
-      const snap=await getDoc(doc(db,"users",u));
+      const snap=await getDoc(doc(db,"users",currentUid));
       const d=snap.data();if(!d)return;
       const jail=d.jailUntil||0;const now=Date.now();
       if(jail>now){
@@ -497,8 +419,8 @@ function startJailCheck(){
   },1000);
 }
 async function isInJail(){
-  const u=uid();if(!u)return false;
-  const snap=await getDoc(doc(db,"users",u));
+  if(!currentUid)return false;
+  const snap=await getDoc(doc(db,"users",currentUid));
   const d=snap.data();if(!d)return false;
   if(d.jailUntil&&d.jailUntil>Date.now()){toast("🔒 Hapistesin!");return true}
   return false;
@@ -507,9 +429,9 @@ async function isInJail(){
 function startHideCheck(){
   if(hideInterval)clearInterval(hideInterval);
   hideInterval=setInterval(async()=>{
+    if(!currentUid)return;
     try{
-      const u=uid();if(!u)return;
-      const snap=await getDoc(doc(db,"users",u));
+      const snap=await getDoc(doc(db,"users",currentUid));
       const d=snap.data();if(!d)return;
       const hu=d.hidingUntil||0;const now=Date.now();
       if(d.hiding&&hu>now){
@@ -518,7 +440,7 @@ function startHideCheck(){
         $("hideTimer").textContent=`${Math.floor(k/60)}:${(k%60).toString().padStart(2,"0")} (${d.hidingIn||"sokak"})`;
       }else{
         $("hideBanner").classList.remove("show");
-        if(d.hiding)await updateDoc(doc(db,"users",u),{hiding:false});
+        if(d.hiding)await updateDoc(doc(db,"users",currentUid),{hiding:false});
       }
     }catch(e){}
   },1000);
@@ -526,8 +448,8 @@ function startHideCheck(){
 async function startHiding(minutes,where){
   try{
     if(await isInJail())return;
-    const u=uid();if(!u)return;
-    const ref=doc(db,"users",u);
+    if(!currentUid)return;
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     if(d.hiding&&d.hidingUntil>Date.now())return toast("Zaten saklanıyorsun.");
     await updateDoc(ref,{hiding:true,hidingUntil:Date.now()+minutes*60*1000,hidingIn:where});
@@ -535,13 +457,13 @@ async function startHiding(minutes,where){
   }catch(e){}
 }
 async function stopHiding(){
-  const u=uid();if(!u)return;
-  await updateDoc(doc(db,"users",u),{hiding:false,hidingUntil:0});
+  if(!currentUid)return;
+  await updateDoc(doc(db,"users",currentUid),{hiding:false,hidingUntil:0});
   toast("Saklanma bitti.");
 }
 async function isHiding(){
-  const u=uid();if(!u)return false;
-  const snap=await getDoc(doc(db,"users",u));
+  if(!currentUid)return false;
+  const snap=await getDoc(doc(db,"users",currentUid));
   const d=snap.data();
   return d&&d.hiding&&d.hidingUntil>Date.now();
 }
@@ -552,7 +474,7 @@ async function loadPlayers(){
     const s=await getDocs(q);
     allPlayers=[];
     s.forEach(docu=>{
-      if(docu.id===uid())return;
+      if(docu.id===currentUid)return;
       allPlayers.push({id:docu.id,...docu.data()});
     });
     return allPlayers;
@@ -571,9 +493,9 @@ async function addNotification(toUid,notif){
   }catch(e){}
 }
 async function renderNotifications(){
+  if(!currentUid)return;
   try{
-    const u=uid();if(!u)return;
-    const snap=await getDoc(doc(db,"users",u));
+    const snap=await getDoc(doc(db,"users",currentUid));
     const d=snap.data();
     const notifs=d.notifications||[];
     const unread=notifs.filter(n=>!n.read).length;
@@ -604,8 +526,8 @@ async function renderNotifications(){
   }catch(e){}
 }
 async function dismissNotification(idx){
-  const u=uid();if(!u)return;
-  const ref=doc(db,"users",u);
+  if(!currentUid)return;
+  const ref=doc(db,"users",currentUid);
   const snap=await getDoc(ref);const d=snap.data();
   const notifs=d.notifications||[];
   if(notifs[idx])notifs[idx].read=true;
@@ -617,16 +539,16 @@ async function sendHarac(targetUid,targetName,amount){
   try{
     if(await isInJail())return;
     if(await isHiding())return toast("Saklanırken olmaz.");
-    const u=uid();const uName=currentUserData?.name||"?";
-    await addNotification(targetUid,{type:"harac",from:u,fromName:uName,amount,text:`💰 ${uName} senden ${amount.toLocaleString()} TL haraç istiyor.`});
+    const uName=currentUserData?.name||"?";
+    await addNotification(targetUid,{type:"harac",from:currentUid,fromName:uName,amount,text:`💰 ${uName} senden ${amount.toLocaleString()} TL haraç istiyor.`});
     toast(`Haraç gönderildi: ${targetName}`);
     tgLog(`💸 <b>HARAÇ</b>\n${uName} → ${targetName}\n${amount} TL`);
   }catch(e){toast("Hata: "+e.message)}
 }
 async function payHarac(n,idx){
   try{
-    const u=uid();if(!u)return;
-    const ref=doc(db,"users",u);
+    if(!currentUid)return;
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     if(d.cash<n.amount)return toast("Yetersiz nakit!");
     await updateDoc(ref,{cash:d.cash-n.amount});
@@ -643,13 +565,13 @@ async function payHarac(n,idx){
 }
 async function rejectHarac(n,idx){
   try{
-    const u=uid();if(!u)return;
-    const ref=doc(db,"users",u);
+    if(!currentUid)return;
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     const notifs=d.notifications||[];
     if(notifs[idx])notifs[idx].read=true;
     await updateDoc(ref,{notifications:notifs});
-    await addNotification(n.from,{type:"harac_rejected",target:u,targetName:d.name,amount:n.amount,text:`❌ ${d.name} haraçı reddetti!`});
+    await addNotification(n.from,{type:"harac_rejected",target:currentUid,targetName:d.name,amount:n.amount,text:`❌ ${d.name} haraçı reddetti!`});
     toast("Haraç reddedildi.");
     await refreshAll();
   }catch(e){toast("Hata: "+e.message)}
@@ -657,18 +579,18 @@ async function rejectHarac(n,idx){
 
 function openAttackMenu(n){
   const plans=[
-    {name:"🥊 Sadece döv",risk:0.20,jail:5,desc:"Nakit %30 hedefe",type:"dov"},
-    {name:"🔪 Yarala",risk:0.40,jail:10,desc:"Nakit %50 + env %25, can -25",type:"yarala"},
-    {name:"⚔️ Ağır yarala",risk:0.55,jail:15,desc:"Nakit %70 + env %50, can -40",type:"agir"},
-    {name:"💀 Öldür",risk:0.75,jail:30,desc:"TÜM nakit + TÜM envanter, can 0",type:"oldur"}
+    {name:"🥊 Sadece döv",risk:0.20,jail:5,desc:"Nakit %30",type:"dov"},
+    {name:"🔪 Yarala",risk:0.40,jail:10,desc:"Nakit %50 + env %25",type:"yarala"},
+    {name:"⚔️ Ağır yarala",risk:0.55,jail:15,desc:"Nakit %70 + env %50",type:"agir"},
+    {name:"💀 Öldür",risk:0.75,jail:30,desc:"TÜM nakit + env",type:"oldur"}
   ];
   openModal("⚔️ SALDIRI TÜRÜ",`Hedef: ${n.targetName}`,plans,async(p)=>{await performAttack(n,p)});
 }
 async function performAttack(n,plan){
   try{
     if(await isInJail())return;
-    const u=uid();if(!u)return;
-    const myRef=doc(db,"users",u);
+    if(!currentUid)return;
+    const myRef=doc(db,"users",currentUid);
     const mySnap=await getDoc(myRef);const me=mySnap.data();
     const tRef=doc(db,"users",n.target);
     const tSnap=await getDoc(tRef);const tgt=tSnap.data();
@@ -700,8 +622,8 @@ async function performAttack(n,plan){
       Object.keys(calinan).forEach(k=>{yeniEnvM[k]=(yeniEnvM[k]||0)+calinan[k]});
       const yeniCanM=Math.max(1,(me.health||50)-hasar);
       await updateDoc(myRef,{cash:(me.cash||0)+nakit,inventory:yeniEnvM,health:yeniCanM,wanted:Math.min(100,(me.wanted||0)+(plan.type==="oldur"?40:20)),jailUntil:Date.now()+plan.jail*60*1000});
-      toast(`✅ Kazandın! +${nakit.toLocaleString()} TL, -${hasar} can.`);
-      await addNotification(n.target,{type:"info",text:`🚨 ${me.name} sana saldırdı! ${plan.type==="oldur"?"ÖLDÜN.":`-${nakit.toLocaleString()} TL`}`});
+      toast(`✅ Kazandın! +${nakit.toLocaleString()} TL`);
+      await addNotification(n.target,{type:"info",text:`🚨 ${me.name} sana saldırdı!`});
       tgLog(`⚔️ <b>SALDIRI</b>\n${me.name} → ${tgt.name}\nKazanan: ${me.name}`);
     }else{
       let nakit=0,envY=0,can=0;
@@ -719,7 +641,6 @@ async function performAttack(n,plan){
       await updateDoc(tRef,{cash:(tgt.cash||0)+nakit,inventory:tEnv,wanted:Math.min(100,(tgt.wanted||0)+5)});
       toast(`❌ Kaybettin! -${nakit.toLocaleString()} TL`);
       await addNotification(n.target,{type:"info",text:`🛡️ ${me.name} sana saldırdı ama kazandın!`});
-      tgLog(`⚔️ <b>SALDIRI</b>\n${me.name} → ${tgt.name}\nKazanan: ${tgt.name}`);
     }
     await refreshAll();
   }catch(e){toast("Saldırı: "+e.message)}
@@ -727,11 +648,11 @@ async function performAttack(n,plan){
 
 async function findHouse(targetUid,targetName){
   try{
-    const u=uid();if(!u)return;
-    const myRef=doc(db,"users",u);
+    if(!currentUid)return;
+    const myRef=doc(db,"users",currentUid);
     const snap=await getDoc(myRef);const me=snap.data();
     if((me.cash||0)<DETECTIVE_COST)return toast("Yetersiz nakit! "+DETECTIVE_COST.toLocaleString()+" TL");
-    if(!confirm(`${targetName} evini bulmak için ${DETECTIVE_COST.toLocaleString()} TL öde?`))return;
+    if(!confirm(`${targetName} evini bulmak için ${DETECTIVE_COST.toLocaleString()} TL?`))return;
     await updateDoc(myRef,{cash:me.cash-DETECTIVE_COST});
     await updateDoc(doc(db,"users",targetUid),{hiding:false,hidingUntil:0,hidingIn:""});
     toast(`🕵️ ${targetName} bulundu!`);
@@ -807,9 +728,9 @@ function openDirectAttack(target){
 async function attemptCrime(crimeId){
   try{
     if(await isInJail()||await isHiding())return;
-    const u=uid();if(!u)return;
+    if(!currentUid)return;
     const crime=CRIMES.find(c=>c.id===crimeId);
-    const ref=doc(db,"users",u);
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     const inv=d.inventory||{};
     if(!hasAny(inv,crime.requires)){
@@ -836,11 +757,6 @@ async function executeCrime(crime,plan,d,ref){
       }
     });
     risk=Math.max(0.05,Math.min(0.98,risk));
-    if(plan.bribe){
-      if(d.cash<plan.bribe)return toast("Rüşvet için para yok.");
-      await updateDoc(ref,{cash:d.cash-plan.bribe});
-      d.cash-=plan.bribe;
-    }
     const basarili=Math.random()>risk;
     const yeniWanted=Math.min(100,(d.wanted||0)+Math.round((basarili?8:25)*wMult));
     if(basarili){
@@ -865,9 +781,9 @@ async function executeCrime(crime,plan,d,ref){
 async function buyItem(k){
   try{
     if(await isInJail()||await isHiding())return;
-    const u=uid();if(!u)return;
+    if(!currentUid)return;
     const it=ITEMS[k];
-    const ref=doc(db,"users",u);
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     if(d.cash<it.price)return toast("Yetersiz nakit.");
     const inv=d.inventory||{};
@@ -881,11 +797,11 @@ async function buyItem(k){
 async function buyCoin(symbol,amountTry){
   try{
     if(await isInJail()||await isHiding())return;
-    const u=uid();if(!u)return;
+    if(!currentUid)return;
     const prices=await getMarket();
     const price=prices[symbol]||BASE_PRICE[symbol];
     const adet=+(amountTry/price).toFixed(8);
-    const ref=doc(db,"users",u);
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     if(d.cash<amountTry)return toast("Yetersiz nakit.");
     const portfolio=d.portfolio||{};
@@ -901,10 +817,10 @@ async function buyCoin(symbol,amountTry){
 async function sellCoin(symbol,adet){
   try{
     if(await isInJail()||await isHiding())return;
-    const u=uid();if(!u)return;
+    if(!currentUid)return;
     const prices=await getMarket();
     const price=prices[symbol]||BASE_PRICE[symbol];
-    const ref=doc(db,"users",u);
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     const portfolio=d.portfolio||{};
     const cur=portfolio[symbol];
@@ -921,9 +837,9 @@ async function sellCoin(symbol,adet){
 async function work(jobId){
   try{
     if(await isInJail()||await isHiding())return;
-    const u=uid();if(!u)return;
+    if(!currentUid)return;
     const job=JOBS.find(j=>j.id===jobId);
-    const ref=doc(db,"users",u);
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     if(d.energy<10)return toast("Enerjin yok.");
     let pay=job.pay;
@@ -938,9 +854,9 @@ async function work(jobId){
 async function buyAsset(id){
   try{
     if(await isInJail()||await isHiding())return;
-    const u=uid();if(!u)return;
+    if(!currentUid)return;
     const a=ASSETS.find(x=>x.id===id);
-    const ref=doc(db,"users",u);
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     if(d.cash<a.price)return toast("Yetersiz nakit.");
     const assets=d.assets||[];
@@ -954,8 +870,8 @@ async function buyAsset(id){
 async function takeLoan(amount){
   try{
     if(await isInJail()||await isHiding())return;
-    const u=uid();if(!u)return;
-    const ref=doc(db,"users",u);
+    if(!currentUid)return;
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     if((d.debt||0)+amount>50000)return toast("Limit 50K.");
     await updateDoc(ref,{cash:d.cash+amount,debt:(d.debt||0)+Math.floor(amount*1.2)});
@@ -966,8 +882,8 @@ async function takeLoan(amount){
 async function payDebt(amount){
   try{
     if(await isInJail())return;
-    const u=uid();if(!u)return;
-    const ref=doc(db,"users",u);
+    if(!currentUid)return;
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     if(d.cash<amount)return toast("Yetersiz nakit.");
     await updateDoc(ref,{cash:d.cash-amount,debt:Math.max(0,(d.debt||0)-amount)});
@@ -979,8 +895,8 @@ async function payDebt(amount){
 async function heal(){
   try{
     if(await isInJail()||await isHiding())return;
-    const u=uid();if(!u)return;
-    const ref=doc(db,"users",u);
+    if(!currentUid)return;
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     if(d.cash<500)return toast("Yetersiz nakit.");
     if(d.health>=50)return toast("Canın tam.");
@@ -992,8 +908,8 @@ async function heal(){
 async function eat(){
   try{
     if(await isInJail()||await isHiding())return;
-    const u=uid();if(!u)return;
-    const ref=doc(db,"users",u);
+    if(!currentUid)return;
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     if(d.cash<200)return toast("Yetersiz nakit.");
     if(d.energy>=100)return toast("Enerjin tam.");
@@ -1005,8 +921,8 @@ async function eat(){
 
 async function tickEffects(){
   try{
-    const u=uid();if(!u)return;
-    const ref=doc(db,"users",u);
+    if(!currentUid)return;
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);const d=snap.data();
     if(!d)return;
     const now=Date.now();
@@ -1047,10 +963,10 @@ async function refreshRanking(){
 
 async function refreshAll(){
   try{
-    const u=uid();if(!u)return;
-    const ref=doc(db,"users",u);
+    if(!currentUid)return;
+    const ref=doc(db,"users",currentUid);
     const snap=await getDoc(ref);
-    if(!snap.exists()){await ensureUserDoc(auth.currentUser);return}
+    if(!snap.exists())return;
     const d=snap.data();if(!d)return;
     currentUserData=d;
     const prices=await getMarket()||BASE_PRICE;
@@ -1115,19 +1031,19 @@ async function refreshAll(){
     else sak.forEach(p=>{
       const row=document.createElement("div");row.className="row";
       row.innerHTML=`<span class="label">🥷 ${p.name} → ${p.hidingIn||"?"}</span>`;
-      const b=document.createElement("button");b.className="attack";b.textContent="🕵️ BUL ("+DETECTIVE_COST.toLocaleString()+")";
+      const b=document.createElement("button");b.className="attack";b.textContent="🕵️ BUL";
       b.onclick=()=>findHouse(p.id,p.name);
       row.appendChild(b);db2.appendChild(row);
     });
     const hb=$("hideBox");hb.innerHTML="";
     if(hiding){
       const row=document.createElement("div");row.className="row";
-      row.innerHTML=`<span class="label">🥷 Saklanıyorsun: ${d.hidingIn}</span>`;
+      row.innerHTML=`<span class="label">🥷 ${d.hidingIn}</span>`;
       const b=document.createElement("button");b.textContent="ÇIK";b.onclick=stopHiding;
       row.appendChild(b);hb.appendChild(row);
     }else{
       const r1=document.createElement("div");r1.className="row";
-      r1.innerHTML=`<span class="label">🌲 Sokakta saklan (10 dk)</span>`;
+      r1.innerHTML=`<span class="label">🌲 Sokak (10 dk)</span>`;
       const b1=document.createElement("button");b1.textContent="SAKLAN";b1.onclick=()=>startHiding(10,"Sokak");
       r1.appendChild(b1);hb.appendChild(r1);
       (d.assets||[]).forEach(a=>{
@@ -1168,11 +1084,11 @@ async function refreshAll(){
     });
     const hhb=$("healthBox");hhb.innerHTML="";
     const r1=document.createElement("div");r1.className="row";
-    r1.innerHTML=`<span class="label">🏥 Hastane (+30 can)</span><span class="value">500 TL</span>`;
+    r1.innerHTML=`<span class="label">🏥 Hastane (+30)</span><span class="value">500 TL</span>`;
     const b1=document.createElement("button");b1.className="buy";b1.textContent="GİT";b1.onclick=heal;
     r1.appendChild(b1);hhb.appendChild(r1);
     const r2=document.createElement("div");r2.className="row";
-    r2.innerHTML=`<span class="label">🍔 Yemek (+20 enerji)</span><span class="value">200 TL</span>`;
+    r2.innerHTML=`<span class="label">🍔 Yemek (+20)</span><span class="value">200 TL</span>`;
     const b2=document.createElement("button");b2.className="buy";b2.textContent="YE";b2.onclick=eat;
     r2.appendChild(b2);hhb.appendChild(r2);
     const cb=$("creditBox");cb.innerHTML="";
@@ -1182,10 +1098,7 @@ async function refreshAll(){
     await refreshRanking();
     await renderNotifications();
     if(isAdmin)loadAdminPanel();
-  }catch(e){
-    alert("refreshAll: "+e.message);
-    console.error(e);
-  }
+  }catch(e){console.error("refreshAll",e)}
 }
 
 $("admClose").onclick=()=>{$("adminPanel").style.display="none"};
@@ -1203,17 +1116,17 @@ async function loadAdminPanel(){
       const inp=document.createElement("input");inp.placeholder="TL";inp.type="number";
       const mk=(txt,fn,title)=>{const b=document.createElement("button");b.textContent=txt;b.title=title||txt;b.onclick=fn;return b};
       row.appendChild(inp);
-      row.appendChild(mk("+₺",async()=>{const v=parseInt(inp.value);if(!v)return;await updateDoc(doc(db,"users",docu.id),{cash:(d.cash||0)+v});toast(`+${v} TL`);loadAdminPanel()}));
-      row.appendChild(mk("−₺",async()=>{const v=parseInt(inp.value);if(!v)return;await updateDoc(doc(db,"users",docu.id),{cash:Math.max(0,(d.cash||0)-v)});toast(`-${v} TL`);loadAdminPanel()}));
+      row.appendChild(mk("+₺",async()=>{const v=parseInt(inp.value);if(!v)return;await updateDoc(doc(db,"users",docu.id),{cash:(d.cash||0)+v});toast(`+${v}`);loadAdminPanel()}));
+      row.appendChild(mk("−₺",async()=>{const v=parseInt(inp.value);if(!v)return;await updateDoc(doc(db,"users",docu.id),{cash:Math.max(0,(d.cash||0)-v)});toast(`-${v}`);loadAdminPanel()}));
       row.appendChild(mk("❤️",async()=>{await updateDoc(doc(db,"users",docu.id),{health:50,maxHealth:50});toast("Can 50");loadAdminPanel()},"Can 50"));
       row.appendChild(mk("⚡",async()=>{await updateDoc(doc(db,"users",docu.id),{energy:100});toast("Enerji 100");loadAdminPanel()},"Enerji 100"));
-      row.appendChild(mk("🔓",async()=>{await updateDoc(doc(db,"users",docu.id),{jailUntil:0});toast("Hapisten çıktı");loadAdminPanel()},"Hapisten çıkar"));
+      row.appendChild(mk("🔓",async()=>{await updateDoc(doc(db,"users",docu.id),{jailUntil:0});toast("Çıktı");loadAdminPanel()},"Hapisten çıkar"));
       row.appendChild(mk("🚨",async()=>{await updateDoc(doc(db,"users",docu.id),{wanted:0});toast("Aranma 0");loadAdminPanel()},"Aranma sıfırla"));
       row.appendChild(mk("🏦",async()=>{await updateDoc(doc(db,"users",docu.id),{debt:0});toast("Borç 0");loadAdminPanel()},"Borç sıfırla"));
-      row.appendChild(mk("🎒",async()=>{if(!confirm(`${d.name} envanteri sil?`))return;await updateDoc(doc(db,"users",docu.id),{inventory:{}});toast("Envanter silindi");loadAdminPanel()},"Envanter temizle"));
-      row.appendChild(mk("🏪",async()=>{if(!confirm(`${d.name} mülkleri sil?`))return;await updateDoc(doc(db,"users",docu.id),{assets:[]});toast("Mülkler silindi");loadAdminPanel()},"Mülkleri sil"));
+      row.appendChild(mk("🎒",async()=>{if(!confirm(`${d.name} envanteri sil?`))return;await updateDoc(doc(db,"users",docu.id),{inventory:{}});loadAdminPanel()},"Envanter temizle"));
+      row.appendChild(mk("🏪",async()=>{if(!confirm(`${d.name} mülkleri sil?`))return;await updateDoc(doc(db,"users",docu.id),{assets:[]});loadAdminPanel()},"Mülkleri sil"));
       row.appendChild(mk("🔒",async()=>{await updateDoc(doc(db,"users",docu.id),{jailUntil:Date.now()+30*60*1000});toast("30 dk hapis");loadAdminPanel()},"30 dk hapis"));
-      const bBan=mk(d.banned?"UNBAN":"BAN",async()=>{await updateDoc(doc(db,"users",docu.id),{banned:!d.banned});toast(`${d.banned?"Unban":"Ban"}`);loadAdminPanel()});
+      const bBan=mk(d.banned?"UNBAN":"BAN",async()=>{await updateDoc(doc(db,"users",docu.id),{banned:!d.banned});loadAdminPanel()});
       row.appendChild(bBan);
       box.appendChild(row);
     });
@@ -1226,12 +1139,20 @@ $("admResetMarket").onclick=async()=>{const prices={};COINS.forEach(c=>prices[c]
 $("admRefresh").onclick=()=>loadAdminPanel();
 $("admTestTg").onclick=()=>tgLog(`🧪 Test - ${new Date().toLocaleString("tr-TR")}`);
 
+$("complaintSend").onclick=async()=>{
+  try{
+    const tip=$("complaintType").value,text=$("complaintText").value.trim();
+    if(!text)return toast("Mesaj boş.");
+    await tgLog(`📮 <b>${tip.toUpperCase()}</b>\n👤 ${currentUserData?.name||"?"}\n\n💬 ${text}`);
+    $("complaintText").value="";
+    toast("✅ İletildi.");
+  }catch(e){toast("Hata: "+e.message)}
+};
+
 setInterval(async()=>{
-  if(!uid())return;
+  if(!currentUid)return;
   try{await tickEffects();await refreshAll()}catch(e){}
 },60000);
-
-setTimeout(()=>{if(uid()){tickEffects();refreshAll()}},3000);
 </script>
 </body>
 </html>
