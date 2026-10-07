@@ -1,191 +1,7 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Survival Tycoon</title>
-<style>
-  * { box-sizing: border-box; font-family: 'Segoe UI', 'Courier New', monospace; margin:0; padding:0; }
-  body { background:#0a0a12; background-image:radial-gradient(circle at 20% 10%, rgba(127,209,255,0.08), transparent 40%),radial-gradient(circle at 80% 80%, rgba(255,100,150,0.06), transparent 40%); color:#e0e0e0; min-height:100vh; }
-  #topbar { display:flex; align-items:center; gap:12px; padding:12px 18px; background:linear-gradient(90deg,#0f0f1a,#12121f,#0f0f1a); border-bottom:1px solid #23233a; position:sticky; top:0; z-index:10; }
-  #topbar .logo { color:#7fd1ff; font-weight:bold; letter-spacing:3px; font-size:15px; }
-  #topbar .spacer { flex:1; }
-  #topbar .badge { background:linear-gradient(135deg,#1e1e30,#2a2a44); padding:6px 12px; border-radius:6px; font-size:11px; color:#9db4d4; border:1px solid #2f2f4a; }
-  #topbar button { background:linear-gradient(135deg,#1c1c2e,#262640); color:#ccc; border:1px solid #3a3a55; padding:8px 14px; cursor:pointer; font-size:12px; border-radius:6px; }
-  #topbar button:hover { background:linear-gradient(135deg,#26264a,#353560); color:#fff; border-color:#7fd1ff; }
-
-  #panels { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:12px; padding:14px; }
-  .panel { background:linear-gradient(180deg,#0f0f1a,#0b0b15); border:1px solid #23233a; padding:14px; border-radius:10px; }
-  .panel h2 { font-size:12px; color:#7fd1ff; margin-bottom:12px; letter-spacing:1.5px; text-transform:uppercase; border-bottom:1px solid #1e1e30; padding-bottom:8px; display:flex; align-items:center; gap:6px; }
-  .panel h2::before { content:''; width:6px; height:6px; border-radius:50%; background:#7fd1ff; box-shadow:0 0 8px #7fd1ff; }
-  .row { display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid #1a1a26; font-size:12px; gap:4px; }
-  .row:last-child { border-bottom:none; }
-  .row .label { color:#a0a8b8; flex:1; min-width:0; }
-  .row .value { color:#e0e0e0; font-weight:600; white-space:nowrap; }
-  .row button { background:linear-gradient(135deg,#1c1c30,#28284a); color:#bfc9dc; border:1px solid #35355a; padding:5px 8px; font-size:10px; cursor:pointer; border-radius:5px; white-space:nowrap; }
-  .row button:hover { background:linear-gradient(135deg,#2a2a50,#3a3a70); color:#fff; border-color:#7fd1ff; }
-  .row button.buy { border-color:#2e5a3a; color:#7fd4a0; }
-  .row button.sell { border-color:#5a2e2e; color:#ff8888; }
-  .row button.work { border-color:#5a4a2e; color:#ffcc77; }
-  .row button.crime { border-color:#5a2e5a; color:#dd99dd; }
-  .row button.attack { border-color:#7a2a2a; color:#ff8888; }
-  .row button:disabled { opacity:0.35; cursor:not-allowed; }
-  .row.locked { opacity:0.5; }
-  .green{color:#4caf50}.red{color:#e53935}.yellow{color:#ffc107}.blue{color:#42a5f5}.purple{color:#cc44cc}
-
-  #loginScreen { position:fixed; inset:0; z-index:100; overflow-y:auto; background:radial-gradient(ellipse at top,#12121f,#0a0a12 70%); display:flex; align-items:center; justify-content:center; padding:20px; }
-  .loginBox { position:relative; width:100%; max-width:400px; background:linear-gradient(180deg,rgba(20,20,35,0.95),rgba(15,15,25,0.95)); border:1px solid #2a2a44; border-radius:16px; padding:32px 26px; box-shadow:0 20px 60px rgba(0,0,0,0.7); }
-  .loginBox h1 { color:#7fd1ff; letter-spacing:8px; font-size:22px; text-align:center; margin-bottom:6px; }
-  .loginBox .subtitle { color:#556080; font-size:11px; text-align:center; letter-spacing:2px; margin-bottom:24px; }
-  .tabrow { display:flex; gap:6px; margin-bottom:20px; background:#0a0a15; padding:4px; border-radius:8px; border:1px solid #1e1e30; }
-  .tabrow .tab { flex:1; padding:10px; text-align:center; font-size:12px; color:#556080; cursor:pointer; border-radius:6px; font-weight:600; }
-  .tabrow .tab.active { background:linear-gradient(135deg,#1c2a4a,#253558); color:#7fd1ff; }
-  .field { margin-bottom:14px; }
-  .field label { display:block; font-size:10px; color:#7a8598; letter-spacing:1.5px; margin-bottom:6px; text-transform:uppercase; }
-  .field input { width:100%; padding:12px 14px; background:#0d0d18; color:#e0e0e0; border:1px solid #24243a; border-radius:8px; font-size:13px; outline:none; }
-  .field input:focus { border-color:#7fd1ff; }
-  .primaryBtn { width:100%; padding:13px; margin-top:8px; border:none; cursor:pointer; background:linear-gradient(135deg,#2a4a7a,#1e3a5a); color:#fff; font-size:13px; letter-spacing:2px; font-weight:700; border-radius:8px; }
-  .primaryBtn:hover { background:linear-gradient(135deg,#3a5a9a,#2a4a7a); }
-
-  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:linear-gradient(135deg,#1a1a2e,#252540); border:1px solid #3a3a55; padding:12px 24px; font-size:13px; color:#fff; border-radius:10px; opacity:0; transition:0.3s; pointer-events:none; z-index:400; max-width:90vw; text-align:center; }
-  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-
-  #modalOverlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:300; display:none; align-items:center; justify-content:center; padding:20px; }
-  #modalOverlay.show { display:flex; }
-  #modalBox { background:linear-gradient(180deg,#15152a,#0f0f1f); border:1px solid #7fd1ff; border-radius:14px; padding:22px; max-width:520px; width:100%; max-height:85vh; overflow-y:auto; }
-  #modalBox h3 { color:#7fd1ff; font-size:15px; margin-bottom:6px; }
-  #modalBox .modalSub { color:#7a8598; font-size:11px; margin-bottom:16px; }
-  #modalBox .plan { background:#0b0b18; border:1px solid #2a2a44; padding:12px; border-radius:8px; margin-bottom:10px; cursor:pointer; }
-  #modalBox .plan:hover { background:#14142a; border-color:#7fd1ff; }
-  #modalBox .plan h4 { color:#c8d4e8; font-size:13px; margin-bottom:6px; }
-  #modalBox .plan .meta { color:#7a8598; font-size:11px; line-height:1.7; }
-  #modalBox .plan .meta b { color:#e0e0e0; }
-  #modalBox .plan.danger h4 { color:#ff8888; }
-  #modalBox .plan.safe h4 { color:#7fd4a0; }
-  #modalBox .cancelBtn { width:100%; padding:10px; margin-top:8px; background:#1a1a2e; border:1px solid #35355a; color:#9db4d4; border-radius:8px; cursor:pointer; font-size:12px; }
-
-  #adminPanel { position:fixed; top:60px; right:10px; width:400px; max-height:82vh; overflow-y:auto; z-index:150; display:none; background:linear-gradient(180deg,rgba(15,15,25,0.98),rgba(10,10,20,0.98)); border:1px solid #7fd1ff; padding:14px; border-radius:12px; }
-  #adminPanel h3 { color:#7fd1ff; font-size:13px; margin-bottom:12px; }
-  #adminPanel .adm-row { display:flex; gap:5px; align-items:center; padding:6px 4px; border-bottom:1px solid #1a1a26; font-size:11px; }
-  #adminPanel .adm-row input { background:#0d0d18; color:#ddd; border:1px solid #24243a; padding:4px 6px; font-size:11px; width:65px; border-radius:4px; }
-  #adminPanel .adm-row button { background:#1a1a30; color:#bfc9dc; border:1px solid #35355a; padding:4px 8px; font-size:10px; cursor:pointer; border-radius:4px; }
-  #adminPanel .adm-tools { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
-  #adminPanel .adm-tools button { background:linear-gradient(135deg,#1a1a30,#252545); color:#bfc9dc; border:1px solid #35355a; padding:7px 12px; font-size:11px; cursor:pointer; border-radius:6px; }
-  #adminPanel .close { position:absolute; top:8px; right:12px; cursor:pointer; color:#666; }
-
-  #complaintPanel textarea { width:100%; padding:10px; background:#0d0d18; color:#e0e0e0; border:1px solid #24243a; border-radius:8px; font-size:12px; min-height:100px; resize:vertical; }
-  #complaintPanel select { width:100%; padding:10px; background:#0d0d18; color:#e0e0e0; border:1px solid #24243a; border-radius:8px; font-size:12px; margin-bottom:10px; }
-  #complaintPanel .sendBtn { width:100%; padding:12px; margin-top:8px; border:none; cursor:pointer; background:linear-gradient(135deg,#7a2a2a,#5a1e1e); color:#fff; font-size:12px; letter-spacing:2px; font-weight:700; border-radius:8px; }
-  #complaintPanel .info { color:#556080; font-size:10px; margin-bottom:10px; }
-
-  #jailBanner { display:none; background:linear-gradient(90deg,#5a1e1e,#3a1010); border:1px solid #e53935; padding:14px; border-radius:8px; margin:14px; text-align:center; color:#ff8888; font-weight:700; letter-spacing:2px; font-size:14px; }
-  #jailBanner.show { display:block; animation:jailPulse 2s ease-in-out infinite; }
-  @keyframes jailPulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
-
-  #hideBanner { display:none; background:linear-gradient(90deg,#1e3a5a,#0f1e30); border:1px solid #7fd1ff; padding:12px; border-radius:8px; margin:14px; text-align:center; color:#7fd1ff; font-weight:700; letter-spacing:2px; }
-  #hideBanner.show { display:block; }
-
-  /* Oyuncu arama ve saldırı */
-  #targetSearch { width:100%; padding:10px; background:#0d0d18; color:#e0e0e0; border:1px solid #24243a; border-radius:8px; font-size:12px; margin-bottom:8px; }
-  .player-card { background:#0b0b18; border:1px solid #2a2a44; padding:10px; border-radius:8px; margin-bottom:8px; }
-  .player-card .pname { color:#7fd1ff; font-size:12px; font-weight:600; margin-bottom:4px; }
-  .player-card .pmeta { color:#7a8598; font-size:10px; margin-bottom:8px; }
-  .player-card .pbuttons { display:flex; gap:6px; flex-wrap:wrap; }
-  .player-card button { padding:5px 10px; font-size:10px; border-radius:5px; cursor:pointer; border:1px solid #35355a; background:#1a1a30; color:#bfc9dc; }
-  .player-card button:hover { background:#2a2a50; color:#fff; border-color:#7fd1ff; }
-  .player-card button.danger { border-color:#5a2e2e; color:#ff8888; }
-  .player-card button.danger:hover { background:#4a1e1e; border-color:#e53935; }
-
-  @media (max-width:500px) { #adminPanel { width:calc(100% - 20px); right:10px; left:10px; } .loginBox { padding:26px 20px; } .loginBox h1 { font-size:18px; letter-spacing:5px; } }
-</style>
-</head>
-<body>
-
-<div id="jailBanner">🔒 HAPİSTESİN — Kalan: <span id="jailTimer">--:--</span></div>
-<div id="hideBanner">🥷 SAKLANIYORSUN — Kalan: <span id="hideTimer">--:--</span></div>
-
-<div id="loginScreen">
-  <div class="loginBox">
-    <h1>SURVIVAL TYCOON</h1>
-    <div class="subtitle">EKONOMİ • HAYATTA KALMA • SUÇ</div>
-    <div class="tabrow">
-      <div class="tab active" id="tabLogin">GİRİŞ YAP</div>
-      <div class="tab" id="tabRegister">KAYIT OL</div>
-    </div>
-    <div class="field"><label>E-POSTA</label><input id="inpEmail" type="text" placeholder="ornek@mail.com" /></div>
-    <div class="field"><label>ŞİFRE</label><input id="inpPass" type="password" placeholder="••••••••" /></div>
-    <div class="field" id="fieldPass2" style="display:none"><label>ŞİFRE TEKRAR</label><input id="inpPass2" type="password" placeholder="••••••••" /></div>
-    <button class="primaryBtn" id="btnSubmit">GİRİŞ YAP</button>
-  </div>
-</div>
-
-<header id="topbar" hidden>
-  <span class="logo">SURVIVAL TYCOON</span>
-  <span class="spacer"></span>
-  <span class="badge" id="userInfo">-</span>
-  <span class="badge" id="notifBadge" style="display:none;background:#5a1e1e;color:#ff8888;">🔔 <span id="notifCount">0</span></span>
-  <button id="logoutBtn">ÇIKIŞ</button>
-</header>
-
-<main id="panels" hidden>
-  <section class="panel"><h2>👤 Durum</h2><div id="statusBox">-</div></section>
-  <section class="panel"><h2>🔔 Bildirimler</h2><div id="notifBox"></div></section>
-  <section class="panel"><h2>📈 Borsa / Kripto</h2><div id="marketList"></div></section>
-  <section class="panel"><h2>💰 Portföy & Varlıklar</h2><div id="assetList"></div></section>
-  <section class="panel"><h2>💼 Yasal İşler</h2><div id="jobList"></div></section>
-  <section class="panel"><h2>🔫 Yasadışı İşler</h2><div id="crimeBox"></div></section>
-  <section class="panel"><h2>🎯 Oyuncu Arama & Haraç / Saldırı</h2><div id="playersBox"></div></section>
-  <section class="panel"><h2>🕵️ Ev Bulma (Dedektif)</h2><div id="detectiveBox"></div></section>
-  <section class="panel"><h2>🥷 Saklanma</h2><div id="hideBox"></div></section>
-  <section class="panel"><h2>🛒 Kara Borsa</h2><div id="shopBox"></div></section>
-  <section class="panel"><h2>🎒 Envanter</h2><div id="invBox"></div></section>
-  <section class="panel"><h2>🏪 Mülk Alım</h2><div id="assetBuyBox"></div></section>
-  <section class="panel"><h2>🏥 Hastane & Yemek</h2><div id="healthBox"></div></section>
-  <section class="panel"><h2>🏦 Banka / Kredi</h2><div id="creditBox"></div></section>
-  <section class="panel"><h2>🏆 Sıralama (Top 20)</h2><div id="rankingBox"></div></section>
-  <section class="panel" id="complaintPanel">
-    <h2>📮 Şikayet / Dilekçe</h2>
-    <div class="info">Mesajın doğrudan admin'e ulaşır.</div>
-    <select id="complaintType">
-      <option value="Şikayet">Şikayet</option>
-      <option value="Dilekçe">Dilekçe</option>
-      <option value="Hata Bildirimi">Hata Bildirimi</option>
-      <option value="Öneri">Öneri</option>
-    </select>
-    <textarea id="complaintText" placeholder="Mesajını yaz..."></textarea>
-    <button class="sendBtn" id="complaintSend">GÖNDER</button>
-  </section>
-  <section class="panel"><h2>📜 Log</h2><div id="logBox" style="font-size:10px; color:#556080; max-height:220px; overflow-y:auto;"></div></section>
-</main>
-
-<div id="adminPanel">
-  <span class="close" id="admClose">✕</span>
-  <h3>⚡ ADMIN PANELİ</h3>
-  <div id="admUsers"></div>
-  <div class="adm-tools">
-    <button id="admGlobalAdd">🌍 Global +1000 TL</button>
-    <button id="admGlobalSub">🌍 Global -1000 TL</button>
-    <button id="admResetMarket">📊 Market Sıfırla</button>
-    <button id="admRefresh">🔄 Yenile</button>
-    <button id="admTestTg">📨 TG Test</button>
-  </div>
-</div>
-
-<div id="modalOverlay">
-  <div id="modalBox">
-    <h3 id="modalTitle">-</h3>
-    <div class="modalSub" id="modalSub">-</div>
-    <div id="modalPlans"></div>
-    <button class="cancelBtn" id="modalCancel">İPTAL</button>
-  </div>
-</div>
-
-<div id="toast"></div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, limit, getDocs, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAkJQzLDkskx8uFbKtzpS_PG1nDopYo_bY",
@@ -199,15 +15,19 @@ const firebaseConfig = {
 
 const TG_TOKEN = "8600556676:AAFc6dqxJpHnNbhdYBkf7QBmLINUs86J-sI";
 const TG_CHAT  = "8788868439";
-const ADMIN_USER = "72ADMIN";
-const ADMIN_PASS = "72ADMIN";
-const ADMIN_EMAIL = "admin@survival-tycoon.local";
+
+/* ⚡ HAZIR HESAPLAR — Datrox = normal oyuncu */
+const PRESET_USERS = {
+  "Fc7mur":   { email: "fc7mur@survival-tycoon.local",    pass: "bayskral",    admin: false },
+  "Yourtkedi":{ email: "yourtkedi@survival-tycoon.local", pass: "12345ali6789",admin: false },
+  "Datrox":   { email: "datrox@survival-tycoon.local",    pass: "cekmece13",   admin: false },
+  "72ADMIN":  { email: "admin@survival-tycoon.local",     pass: "72ADMIN",     admin: true  }
+};
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* ============ VERİLER ============ */
 const COINS = ["BTC","ETH","SOL","BNB","XRP","ADA","DOGE","AVAX","DOT","LINK"];
 const BASE_PRICE = { BTC:60000, ETH:3000, SOL:150, BNB:400, XRP:0.5, ADA:0.4, DOGE:0.08, AVAX:30, DOT:6, LINK:14 };
 
@@ -223,89 +43,89 @@ const JOBS = [
 ];
 
 const ITEMS = {
-  bicak:    { name:"Bıçak",          price:2000,   icon:"🔪", desc:"Market/Kasa",          power:1,  efekt:{risk:-0.03} },
-  sustali:  { name:"Sustalı",        price:5000,   icon:"🗡️", desc:"Market/Araç/Kasa",     power:2,  efekt:{risk:-0.05} },
-  maymuncuk:{ name:"Maymuncuk",      price:8000,   icon:"🔓", desc:"Araç/Kasa",            power:0,  efekt:{risk:-0.08} },
-  tabanca:  { name:"Tabanca",        price:25000,  icon:"🔫", desc:"Banka/Mücevher",       power:4,  efekt:{risk:-0.10} },
-  maske:    { name:"Maske",          price:8000,   icon:"🎭", desc:"Tüm suçlar -%15",      power:0,  efekt:{risk:-0.15} },
-  eldiven:  { name:"Eldiven",        price:4000,   icon:"🧤", desc:"Aranma -%50",          power:0,  efekt:{wanted:-0.5} },
-  dinamit:  { name:"Dinamit",        price:40000,  icon:"💥", desc:"Kasa/Banka",           power:6,  efekt:{risk:-0.12, gain:0.2} },
-  avtufegi: { name:"Av Tüfeği",      price:60000,  icon:"🎯", desc:"Banka/Kumarhane",      power:7,  efekt:{risk:-0.15, gain:0.25} },
-  jammer:   { name:"Jammer",         price:50000,  icon:"📡", desc:"Alarm -%25",           power:0,  efekt:{risk:-0.25} },
-  hackcihaz:{ name:"Hack Cihazı",    price:80000,  icon:"💻", desc:"Siber Saldırı",        power:0,  efekt:{risk:-0.20, gain:0.3} },
-  ak47:     { name:"AK-47",          price:200000, icon:"🔫", desc:"Ağır suçlar",          power:10, efekt:{risk:-0.20, gain:0.4} },
-  tanker:   { name:"Akaryakıt Tankeri",price:120000,icon:"🛢️",desc:"Akaryakıt kaçakçılığı",power:0, efekt:{risk:-0.15, gain:0.3} },
-  uyusturucuPaket:{ name:"Uyuşturucu Paketi",price:30000,icon:"💊",desc:"Uyuşturucu",   power:0,  efekt:{gain:0.4} },
-  sigaraMal:{ name:"Kaçak Sigara Malı",price:12000,icon:"🚬", desc:"Sigara kaçakçılığı",   power:0,  efekt:{gain:0.3} },
-  kacisArabasi:{ name:"Kaçış Arabası",price:300000,icon:"🚗", desc:"Yakalanma -%20",       power:3,  efekt:{risk:-0.20} }
+  bicak:{name:"Bıçak",price:2000,icon:"🔪",desc:"Market/Kasa",power:1,efekt:{risk:-0.03}},
+  sustali:{name:"Sustalı",price:5000,icon:"🗡️",desc:"Market/Araç/Kasa",power:2,efekt:{risk:-0.05}},
+  maymuncuk:{name:"Maymuncuk",price:8000,icon:"🔓",desc:"Araç/Kasa",power:0,efekt:{risk:-0.08}},
+  tabanca:{name:"Tabanca",price:25000,icon:"🔫",desc:"Banka/Mücevher",power:4,efekt:{risk:-0.10}},
+  maske:{name:"Maske",price:8000,icon:"🎭",desc:"Tüm suçlar -%15",power:0,efekt:{risk:-0.15}},
+  eldiven:{name:"Eldiven",price:4000,icon:"🧤",desc:"Aranma -%50",power:0,efekt:{wanted:-0.5}},
+  dinamit:{name:"Dinamit",price:40000,icon:"💥",desc:"Kasa/Banka",power:6,efekt:{risk:-0.12,gain:0.2}},
+  avtufegi:{name:"Av Tüfeği",price:60000,icon:"🎯",desc:"Banka/Kumarhane",power:7,efekt:{risk:-0.15,gain:0.25}},
+  jammer:{name:"Jammer",price:50000,icon:"📡",desc:"Alarm -%25",power:0,efekt:{risk:-0.25}},
+  hackcihaz:{name:"Hack Cihazı",price:80000,icon:"💻",desc:"Siber Saldırı",power:0,efekt:{risk:-0.20,gain:0.3}},
+  ak47:{name:"AK-47",price:200000,icon:"🔫",desc:"Ağır suçlar",power:10,efekt:{risk:-0.20,gain:0.4}},
+  tanker:{name:"Akaryakıt Tankeri",price:120000,icon:"🛢️",desc:"Akaryakıt",power:0,efekt:{risk:-0.15,gain:0.3}},
+  uyusturucuPaket:{name:"Uyuşturucu Paketi",price:30000,icon:"💊",desc:"Uyuşturucu",power:0,efekt:{gain:0.4}},
+  sigaraMal:{name:"Kaçak Sigara Malı",price:12000,icon:"🚬",desc:"Sigara",power:0,efekt:{gain:0.3}},
+  kacisArabasi:{name:"Kaçış Arabası",price:300000,icon:"🚗",desc:"Yakalanma -%20",power:3,efekt:{risk:-0.20}}
 };
 
 const CRIMES = [
   { id:"market", name:"Market Soygunu", icon:"🏪", requires:["bicak","sustali"], plans:[
-    { name:"Kasadan para al", min:150, max:400, risk:0.20, jail:3 },
-    { name:"Tüm kasayı boşalt", min:400, max:1000, risk:0.35, jail:5 },
-    { name:"Gece baskını", min:700, max:2000, risk:0.50, jail:8 }
+    {name:"Kasadan para al",min:150,max:400,risk:0.20,jail:3},
+    {name:"Tüm kasayı boşalt",min:400,max:1000,risk:0.35,jail:5},
+    {name:"Gece baskını",min:700,max:2000,risk:0.50,jail:8}
   ]},
   { id:"arac", name:"Araç Hırsızlığı", icon:"🚗", requires:["maymuncuk","sustali"], plans:[
-    { name:"Eski model çal", min:500, max:1200, risk:0.30, jail:5 },
-    { name:"Lüks araba çal", min:1500, max:3500, risk:0.50, jail:10 },
-    { name:"Kurye arabası çal", min:800, max:2000, risk:0.40, jail:7 }
+    {name:"Eski model çal",min:500,max:1200,risk:0.30,jail:5},
+    {name:"Lüks araba çal",min:1500,max:3500,risk:0.50,jail:10},
+    {name:"Kurye arabası çal",min:800,max:2000,risk:0.40,jail:7}
   ]},
   { id:"kasa", name:"Kasa Kırma", icon:"🔓", requires:["dinamit","maymuncuk"], plans:[
-    { name:"Maymuncukla sessizce", min:400, max:1500, risk:0.25, jail:5 },
-    { name:"Dinamitle patlat", min:1500, max:4000, risk:0.55, jail:10 }
+    {name:"Maymuncukla sessizce",min:400,max:1500,risk:0.25,jail:5},
+    {name:"Dinamitle patlat",min:1500,max:4000,risk:0.55,jail:10}
   ]},
   { id:"sigara", name:"Sigara Kaçakçılığı", icon:"🚬", requires:["sigaraMal"], plans:[
-    { name:"Şehir içi dağıtım", min:1000, max:2500, risk:0.30, jail:6 },
-    { name:"Şehirler arası sevkiyat", min:2500, max:6000, risk:0.50, jail:12 },
-    { name:"Gümrükten geçir", min:5000, max:12000, risk:0.70, jail:18 }
+    {name:"Şehir içi dağıtım",min:1000,max:2500,risk:0.30,jail:6},
+    {name:"Şehirler arası sevkiyat",min:2500,max:6000,risk:0.50,jail:12},
+    {name:"Gümrükten geçir",min:5000,max:12000,risk:0.70,jail:18}
   ]},
   { id:"akaryakit", name:"Akaryakıt Kaçakçılığı", icon:"🛢️", requires:["tanker"], plans:[
-    { name:"Küçük istasyona sat", min:1500, max:4000, risk:0.35, jail:8 },
-    { name:"TIR ile sevkiyat", min:4000, max:10000, risk:0.55, jail:15 },
-    { name:"Boru hattı kur", min:10000, max:25000, risk:0.75, jail:25 }
+    {name:"Küçük istasyona sat",min:1500,max:4000,risk:0.35,jail:8},
+    {name:"TIR ile sevkiyat",min:4000,max:10000,risk:0.55,jail:15},
+    {name:"Boru hattı kur",min:10000,max:25000,risk:0.75,jail:25}
   ]},
   { id:"silah", name:"Silah Ticareti", icon:"🔫", requires:["tabanca"], plans:[
-    { name:"Sokak satışı", min:2000, max:5000, risk:0.40, jail:10 },
-    { name:"Mafya anlaşması", min:5000, max:12000, risk:0.60, jail:18 },
-    { name:"Uluslararası sevkiyat", min:12000, max:30000, risk:0.80, jail:30 }
+    {name:"Sokak satışı",min:2000,max:5000,risk:0.40,jail:10},
+    {name:"Mafya anlaşması",min:5000,max:12000,risk:0.60,jail:18},
+    {name:"Uluslararası sevkiyat",min:12000,max:30000,risk:0.80,jail:30}
   ]},
   { id:"uyusturucu", name:"Uyuşturucu Satışı", icon:"💊", requires:["uyusturucuPaket"], plans:[
-    { name:"Sokakta sat", min:3000, max:8000, risk:0.45, jail:12 },
-    { name:"Kulüpte sat", min:8000, max:18000, risk:0.65, jail:20 },
-    { name:"Toptan sevkiyat", min:18000, max:40000, risk:0.85, jail:30 }
+    {name:"Sokakta sat",min:3000,max:8000,risk:0.45,jail:12},
+    {name:"Kulüpte sat",min:8000,max:18000,risk:0.65,jail:20},
+    {name:"Toptan sevkiyat",min:18000,max:40000,risk:0.85,jail:30}
   ]},
   { id:"elmas", name:"Mücevher Soygunu", icon:"💎", requires:["tabanca","avtufegi"], plans:[
-    { name:"Tezgah arkası", min:5000, max:10000, risk:0.50, jail:15 },
-    { name:"Gece alarm iptali", min:10000, max:20000, risk:0.65, jail:22 },
-    { name:"Silahlı baskın", min:20000, max:40000, risk:0.80, jail:30 }
+    {name:"Tezgah arkası",min:5000,max:10000,risk:0.50,jail:15},
+    {name:"Gece alarm iptali",min:10000,max:20000,risk:0.65,jail:22},
+    {name:"Silahlı baskın",min:20000,max:40000,risk:0.80,jail:30}
   ]},
   { id:"hack", name:"Siber Saldırı", icon:"🖥️", requires:["hackcihaz"], plans:[
-    { name:"Küçük şirket", min:6000, max:15000, risk:0.35, jail:15 },
-    { name:"Kripto borsası", min:15000, max:35000, risk:0.55, jail:25 },
-    { name:"Büyük banka", min:35000, max:80000, risk:0.80, jail:30 }
+    {name:"Küçük şirket",min:6000,max:15000,risk:0.35,jail:15},
+    {name:"Kripto borsası",min:15000,max:35000,risk:0.55,jail:25},
+    {name:"Büyük banka",min:35000,max:80000,risk:0.80,jail:30}
   ]},
   { id:"banka", name:"Banka Soygunu", icon:"🏦", requires:["avtufegi","ak47"], plans:[
-    { name:"Gece, arka kapı", min:10000, max:20000, risk:0.50, jail:20 },
-    { name:"Müşteri kılığında", min:20000, max:40000, risk:0.65, jail:25 },
-    { name:"Silahlı baskın", min:40000, max:70000, risk:0.85, jail:30 },
-    { name:"İçeriden adam (rüşvet 20.000)", min:70000, max:120000, risk:0.70, jail:30, bribe:20000 }
+    {name:"Gece, arka kapı",min:10000,max:20000,risk:0.50,jail:20},
+    {name:"Müşteri kılığında",min:20000,max:40000,risk:0.65,jail:25},
+    {name:"Silahlı baskın",min:40000,max:70000,risk:0.85,jail:30},
+    {name:"İçeriden adam (rüşvet 20K)",min:70000,max:120000,risk:0.70,jail:30,bribe:20000}
   ]},
   { id:"kumarhane", name:"Kumarhane Soygunu", icon:"🎰", requires:["ak47","kacisArabasi"], plans:[
-    { name:"Rulet hilesi", min:15000, max:30000, risk:0.55, jail:20 },
-    { name:"Kasa baskını", min:30000, max:60000, risk:0.75, jail:28 },
-    { name:"İçeriden adam", min:60000, max:130000, risk:0.85, jail:30 }
+    {name:"Rulet hilesi",min:15000,max:30000,risk:0.55,jail:20},
+    {name:"Kasa baskını",min:30000,max:60000,risk:0.75,jail:28},
+    {name:"İçeriden adam",min:60000,max:130000,risk:0.85,jail:30}
   ]},
   { id:"adam", name:"Adam Kaçırma", icon:"👤", requires:["ak47","kacisArabasi","maske"], plans:[
-    { name:"Sıradan iş adamı", min:20000, max:45000, risk:0.60, jail:25 },
-    { name:"Zengin iş adamı", min:45000, max:100000, risk:0.75, jail:30 },
-    { name:"Mafya babası", min:100000, max:200000, risk:0.90, jail:30 },
-    { name:"Siyasetçi", min:200000, max:400000, risk:0.95, jail:30 }
+    {name:"Sıradan iş adamı",min:20000,max:45000,risk:0.60,jail:25},
+    {name:"Zengin iş adamı",min:45000,max:100000,risk:0.75,jail:30},
+    {name:"Mafya babası",min:100000,max:200000,risk:0.90,jail:30},
+    {name:"Siyasetçi",min:200000,max:400000,risk:0.95,jail:30}
   ]}
 ];
 
 const ASSETS = [
-  { id:"kiraci", name:"Kiralık Daire", price:100000, income:1000, icon:"🏚️", shelter:true,  shelterMin:30 },
+  { id:"kiraci", name:"Kiralık Daire", price:100000, income:1000, icon:"🏚️", shelter:true, shelterMin:30 },
   { id:"araba", name:"Araba", price:150000, income:1500, icon:"🚗" },
   { id:"dukkan", name:"Dükkan", price:400000, income:4000, icon:"🏪", shelter:true, shelterMin:60 },
   { id:"ev", name:"Ev", price:900000, income:8000, icon:"🏠", shelter:true, shelterMin:120 },
@@ -317,7 +137,7 @@ const ASSETS = [
   { id:"kumarhane", name:"Kumarhane", price:8000000, income:100000, icon:"🎰" }
 ];
 
-const DETECTIVE_COST = 100000; // Ev bulma ücreti
+const DETECTIVE_COST = 100000;
 
 /* ============ YARDIMCILAR ============ */
 const $ = id => document.getElementById(id);
@@ -339,7 +159,7 @@ async function tgLog(text){
       method:"POST", headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ chat_id: TG_CHAT, text: text, parse_mode:"HTML" })
     });
-  } catch(e){ console.warn("TG", e); }
+  } catch(e){}
 }
 
 function hasItem(inv, key) { return inv && inv[key] && inv[key] > 0; }
@@ -347,29 +167,27 @@ function hasAny(inv, keys) { return keys.some(k => hasItem(inv, k)); }
 function getBestWeapon(inv) {
   let best = null, bestPower = 0;
   Object.keys(inv || {}).forEach(k => {
-    if (inv[k] > 0 && ITEMS[k] && ITEMS[k].power > bestPower) {
-      best = k; bestPower = ITEMS[k].power;
-    }
+    if (inv[k] > 0 && ITEMS[k] && ITEMS[k].power > bestPower) { best = k; bestPower = ITEMS[k].power; }
   });
   return { key: best, power: bestPower };
 }
 
-/* ============ MODAL ============ */
 function openModal(title, sub, plans, onPick) {
+  $("modalTitle").style.display = "block";
+  $("modalSub").style.display = "block";
   $("modalTitle").textContent = title;
   $("modalSub").textContent = sub;
   const box = $("modalPlans"); box.innerHTML = "";
   plans.forEach((p, i) => {
     const d = document.createElement("div");
     d.className = "plan" + (p.risk >= 0.7 ? " danger" : p.risk <= 0.35 ? " safe" : "");
-    d.innerHTML = `<h4>${p.name}</h4>
-      <div class="meta">
-        ${p.min !== undefined ? `💰 Kazanç: <b>${p.min.toLocaleString()} - ${p.max.toLocaleString()} TL</b><br>` : ""}
-        ${p.risk !== undefined ? `⚠️ Risk: <b>%${Math.round(p.risk*100)}</b><br>` : ""}
-        ${p.jail !== undefined ? `🔒 Hapis: <b>${p.jail} dk</b><br>` : ""}
-        ${p.desc ? `📌 ${p.desc}` : ""}
-        ${p.bribe ? `<br>💸 Ön ödeme: <b>${p.bribe.toLocaleString()} TL</b>` : ""}
-      </div>`;
+    d.innerHTML = `<h4>${p.name}</h4><div class="meta">
+      ${p.min !== undefined ? `💰 Kazanç: <b>${p.min.toLocaleString()} - ${p.max.toLocaleString()} TL</b><br>` : ""}
+      ${p.risk !== undefined ? `⚠️ Risk: <b>%${Math.round(p.risk*100)}</b><br>` : ""}
+      ${p.jail !== undefined ? `🔒 Hapis: <b>${p.jail} dk</b><br>` : ""}
+      ${p.desc ? `📌 ${p.desc}` : ""}
+      ${p.bribe ? `<br>💸 Ön ödeme: <b>${p.bribe.toLocaleString()} TL</b>` : ""}
+    </div>`;
     d.onclick = () => { closeModal(); onPick(p); };
     box.appendChild(d);
   });
@@ -387,7 +205,7 @@ $("complaintSend").onclick = async () => {
     if (!text) return toast("Mesaj boş.");
     const u = auth.currentUser;
     const name = u?.displayName || u?.email?.split("@")[0] || "?";
-    await tgLog(`📮 <b>${tip.toUpperCase()}</b>\n👤 <b>${name}</b>\n📧 <code>${u?.email || "?"}</code>\n\n💬 ${text}`);
+    await tgLog(`📮 <b>${tip.toUpperCase()}</b>\n👤 <b>${name}</b>\n\n💬 ${text}`);
     $("complaintText").value = "";
     toast("✅ Mesaj iletildi.");
   } catch(e){ toast("Hata: " + e.message); }
@@ -405,59 +223,64 @@ $("tabRegister").onclick = () => {
   $("fieldPass2").style.display = "block"; $("btnSubmit").textContent = "KAYIT OL";
 };
 
-/* ============ ADMIN ============ */
-async function tryAdminLogin(user, pass) {
-  if (user === ADMIN_USER && pass === ADMIN_PASS) {
-    try { await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASS); }
-    catch(e) {
-      if (e.code === "auth/user-not-found" || e.code === "auth/invalid-credential") {
-        try {
-          const cred = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASS);
-          await updateProfile(cred.user, { displayName: ADMIN_USER });
-        } catch(e2) { toast("Admin hatası"); return false; }
-      } else { return false; }
-    }
-    isAdmin = true;
-    tgLog(`🔐 <b>ADMIN GİRİŞİ</b>`);
-    return true;
+/* ============ HAZIR HESAP GİRİŞİ ============ */
+async function tryPresetLogin(user, pass) {
+  const preset = PRESET_USERS[user];
+  if (!preset) return false;
+  if (preset.pass !== pass) return false;
+
+  try {
+    await signInWithEmailAndPassword(auth, preset.email, pass);
+  } catch(e) {
+    if (e.code === "auth/user-not-found" || e.code === "auth/invalid-credential") {
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, preset.email, pass);
+        await updateProfile(cred.user, { displayName: user });
+      } catch(e2) { toast("Hesap oluşturulamadı: " + e2.message); return false; }
+    } else { toast("Giriş: " + e.message); return false; }
   }
-  return false;
+  isAdmin = preset.admin;
+  if (preset.admin) tgLog(`🔐 <b>ADMIN GİRİŞİ</b>`);
+  return true;
 }
 
 /* ============ SUBMIT ============ */
 $("btnSubmit").onclick = async () => {
   try {
-    const email = $("inpEmail").value.trim();
+    const input = $("inpEmail").value.trim();
     const pass = $("inpPass").value;
-    if (!email || !pass) return toast("Tüm alanları doldur.");
+    if (!input || !pass) return toast("Tüm alanları doldur.");
+
     if (mode === "login") {
-      const aOk = await tryAdminLogin(email, pass);
-      if (aOk) return;
-    }
-    if (mode === "register") {
-      const p2 = $("inpPass2").value;
-      if (pass !== p2) return toast("Şifreler uyuşmuyor.");
-      if (pass.length < 6) return toast("Min 6 karakter.");
-      if (!email.includes("@")) return toast("Geçerli e-posta gir.");
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        await updateProfile(cred.user, { displayName: email.split("@")[0] });
-        toast("Kayıt başarılı!");
-      } catch(e) {
+      // Önce hazır hesap mı kontrol
+      const presetOk = await tryPresetLogin(input, pass);
+      if (presetOk) return;
+
+      // Normal giriş
+      const email = input.includes("@") ? input : input + "@survival-tycoon.local";
+      try { await signInWithEmailAndPassword(auth, email, pass); }
+      catch(e) {
         let msg = e.message;
-        if (e.code === "auth/email-already-in-use") msg = "Bu e-posta kayıtlı.";
-        if (e.code === "auth/weak-password") msg = "Şifre zayıf.";
-        toast("Kayıt: " + msg);
+        if (e.code === "auth/user-not-found") msg = "Kullanıcı yok.";
+        if (e.code === "auth/wrong-password" || e.code === "auth/invalid-credential") msg = "Şifre yanlış.";
+        toast("Giriş: " + msg);
       }
       return;
     }
-    if (!email.includes("@")) return toast("Geçerli e-posta gir.");
-    try { await signInWithEmailAndPassword(auth, email, pass); }
-    catch(e) {
+
+    // Kayıt
+    if (!input.includes("@")) return toast("Kayıt için gerçek e-posta gir.");
+    const p2 = $("inpPass2").value;
+    if (pass !== p2) return toast("Şifreler uyuşmuyor.");
+    if (pass.length < 6) return toast("Min 6 karakter.");
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, input, pass);
+      await updateProfile(cred.user, { displayName: input.split("@")[0] });
+      toast("Kayıt başarılı!");
+    } catch(e) {
       let msg = e.message;
-      if (e.code === "auth/user-not-found") msg = "Kullanıcı yok. Kayıt ol.";
-      if (e.code === "auth/wrong-password" || e.code === "auth/invalid-credential") msg = "Şifre yanlış.";
-      toast("Giriş: " + msg);
+      if (e.code === "auth/email-already-in-use") msg = "Bu e-posta kayıtlı.";
+      toast("Kayıt: " + msg);
     }
   } catch(e){ toast("Hata: " + e.message); }
 };
@@ -482,7 +305,7 @@ onAuthStateChanged(auth, async (user) => {
       $("topbar").hidden = false;
       $("panels").hidden = false;
       const name = user.displayName || user.email.split("@")[0];
-      $("userInfo").textContent = name;
+      $("userInfo").textContent = name + (isAdmin ? " ⚡" : "");
 
       await ensureUserDoc(user);
       const snap = await getDoc(doc(db,"users",user.uid));
@@ -490,7 +313,7 @@ onAuthStateChanged(auth, async (user) => {
       currentUserData = d;
 
       if (d?.banned) {
-        document.body.innerHTML = `<div style="padding:60px 30px;text-align:center;color:#e53935;font-family:monospace;background:#0a0a12;min-height:100vh;"><h1>🚫 HESABIN BANLANDI</h1></div>`;
+        document.body.innerHTML = `<div style="padding:60px 30px;text-align:center;color:#e53935;font-family:monospace;background:#0a0a12;min-height:100vh;"><h1>🚫 BANLANDI</h1></div>`;
         return;
       }
 
@@ -516,7 +339,6 @@ onAuthStateChanged(auth, async (user) => {
     }
   } catch(e) {
     alert("AUTH HATASI: " + e.message);
-    console.error(e);
   }
 });
 
@@ -524,19 +346,19 @@ async function ensureUserDoc(user) {
   const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
   if (!snap.exists()) {
-    const isAdm = (user.email === ADMIN_EMAIL);
+    const isPresetAdmin = Object.values(PRESET_USERS).some(p => p.email === user.email && p.admin);
     const init = {
       name: user.displayName || user.email.split("@")[0],
       email: user.email || "",
       cash: 500, debt: 0, age: 18, health: 50, maxHealth: 50, energy: 100,
       wanted: 0, jailUntil: 0, banned: false, createdAt: Date.now(),
-      assets: [], portfolio: {}, inventory: {}, isAdmin: isAdm,
+      assets: [], portfolio: {}, inventory: {}, isAdmin: isPresetAdmin,
       lastIncome: Date.now(), lastHealthTick: Date.now(),
       hiding: false, hidingUntil: 0, hidingIn: "",
       notifications: []
     };
     await setDoc(ref, init);
-    await tgLog(`🆕 <b>YENİ HESAP</b>\n👤 ${init.name}\n📧 <code>${init.email}</code>`);
+    await tgLog(`🆕 <b>YENİ HESAP</b>\n👤 ${init.name}\n📧 <code>${init.email}</code>${isPresetAdmin?"\n👑 ADMIN":""}`);
     log("Hesap: " + init.name);
   }
 }
@@ -552,88 +374,69 @@ async function getMarket() {
   return snap.data().prices || BASE_PRICE;
 }
 
-/* ============ HAPİS ============ */
+/* HAPİS */
 function startJailCheck() {
   if (jailInterval) clearInterval(jailInterval);
   jailInterval = setInterval(async () => {
     try {
       const u = uid(); if (!u) return;
       const snap = await getDoc(doc(db,"users",u));
-      const d = snap.data();
-      if (!d) return;
+      const d = snap.data(); if (!d) return;
       const jail = d.jailUntil || 0;
       const now = Date.now();
       if (jail > now) {
         $("jailBanner").classList.add("show");
         const kalan = Math.floor((jail - now) / 1000);
         $("jailTimer").textContent = `${Math.floor(kalan/60)}:${(kalan%60).toString().padStart(2,"0")}`;
-      } else {
-        $("jailBanner").classList.remove("show");
-      }
+      } else $("jailBanner").classList.remove("show");
     } catch(e){}
   }, 1000);
 }
-
 async function isInJail() {
   const u = uid(); if (!u) return false;
   const snap = await getDoc(doc(db,"users",u));
-  const d = snap.data();
-  if (!d) return false;
+  const d = snap.data(); if (!d) return false;
   if (d.jailUntil && d.jailUntil > Date.now()) { toast("🔒 Hapistesin!"); return true; }
   return false;
 }
 
-/* ============ SAKLANMA ============ */
+/* SAKLANMA */
 function startHideCheck() {
   if (hideInterval) clearInterval(hideInterval);
   hideInterval = setInterval(async () => {
     try {
       const u = uid(); if (!u) return;
       const snap = await getDoc(doc(db,"users",u));
-      const d = snap.data();
-      if (!d) return;
+      const d = snap.data(); if (!d) return;
       const hideUntil = d.hidingUntil || 0;
       const now = Date.now();
       if (d.hiding && hideUntil > now) {
         $("hideBanner").classList.add("show");
         const kalan = Math.floor((hideUntil - now) / 1000);
-        $("hideTimer").textContent = `${Math.floor(kalan/60)}:${(kalan%60).toString().padStart(2,"0")} (${d.hidingIn || "sokak"})`;
+        $("hideTimer").textContent = `${Math.floor(kalan/60)}:${(kalan%60).toString().padStart(2,"0")} (${d.hidingIn||"sokak"})`;
       } else {
         $("hideBanner").classList.remove("show");
-        if (d.hiding) {
-          await updateDoc(doc(db,"users",u), { hiding: false });
-        }
+        if (d.hiding) await updateDoc(doc(db,"users",u), { hiding: false });
       }
     } catch(e){}
   }, 1000);
 }
-
 async function startHiding(minutes, where) {
   try {
     if (await isInJail()) return;
     const u = uid(); if (!u) return;
     const ref = doc(db, "users", u);
-    const snap = await getDoc(ref);
-    const d = snap.data();
+    const snap = await getDoc(ref); const d = snap.data();
     if (d.hiding && d.hidingUntil > Date.now()) return toast("Zaten saklanıyorsun.");
-    await updateDoc(ref, {
-      hiding: true,
-      hidingUntil: Date.now() + minutes * 60 * 1000,
-      hidingIn: where
-    });
+    await updateDoc(ref, { hiding: true, hidingUntil: Date.now() + minutes*60*1000, hidingIn: where });
     toast(`🥷 ${where}'de saklanıyorsun (${minutes} dk)`);
-    log(`🥷 Saklandı: ${where} (${minutes} dk)`);
-  } catch(e){ toast("Hata: " + e.message); }
-}
-
-async function stopHiding() {
-  try {
-    const u = uid(); if (!u) return;
-    await updateDoc(doc(db,"users",u), { hiding: false, hidingUntil: 0 });
-    toast("Saklanmayı bıraktın.");
   } catch(e){}
 }
-
+async function stopHiding() {
+  const u = uid(); if (!u) return;
+  await updateDoc(doc(db,"users",u), { hiding: false, hidingUntil: 0 });
+  toast("Saklanmayı bıraktın.");
+}
 async function isHiding() {
   const u = uid(); if (!u) return false;
   const snap = await getDoc(doc(db,"users",u));
@@ -641,22 +444,21 @@ async function isHiding() {
   return d && d.hiding && d.hidingUntil > Date.now();
 }
 
-/* ============ OYUNCU LİSTESİ ============ */
+/* OYUNCU LİSTESİ */
 async function loadPlayers() {
   try {
     const q = query(collection(db,"users"), orderBy("cash","desc"), limit(50));
     const s = await getDocs(q);
     allPlayers = [];
     s.forEach(docu => {
-      if (docu.id === uid()) return; // kendini listeleme
-      const d = docu.data();
-      allPlayers.push({ id: docu.id, ...d });
+      if (docu.id === uid()) return;
+      allPlayers.push({ id: docu.id, ...docu.data() });
     });
     return allPlayers;
-  } catch(e) { console.warn("players", e); return []; }
+  } catch(e){ return []; }
 }
 
-/* ============ BİLDİRİM SİSTEMİ ============ */
+/* BİLDİRİM */
 async function addNotification(toUid, notif) {
   try {
     const ref = doc(db, "users", toUid);
@@ -666,9 +468,8 @@ async function addNotification(toUid, notif) {
     notifs.unshift({ ...notif, time: Date.now(), read: false });
     if (notifs.length > 30) notifs.length = 30;
     await updateDoc(ref, { notifications: notifs });
-  } catch(e){ console.warn("notif", e); }
+  } catch(e){}
 }
-
 async function renderNotifications() {
   try {
     const u = uid(); if (!u) return;
@@ -676,533 +477,376 @@ async function renderNotifications() {
     const d = snap.data();
     const notifs = d.notifications || [];
     const unread = notifs.filter(n => !n.read).length;
-
-    if (unread > 0) {
-      $("notifBadge").style.display = "inline-block";
-      $("notifCount").textContent = unread;
-    } else {
-      $("notifBadge").style.display = "none";
-    }
+    if (unread > 0) { $("notifBadge").style.display = "inline-block"; $("notifCount").textContent = unread; }
+    else $("notifBadge").style.display = "none";
 
     const box = $("notifBox"); box.innerHTML = "";
-    if (notifs.length === 0) {
-      box.innerHTML = `<div class="row"><span class="label" style="color:#556080;">Bildirim yok</span></div>`;
-      return;
-    }
+    if (notifs.length === 0) { box.innerHTML = `<div class="row"><span class="label" style="color:#556080;">Bildirim yok</span></div>`; return; }
 
     notifs.slice(0, 15).forEach((n, idx) => {
       const row = document.createElement("div"); row.className = "row";
-      row.style.flexDirection = "column";
-      row.style.alignItems = "flex-start";
+      row.style.flexDirection = "column"; row.style.alignItems = "flex-start";
       row.innerHTML = `<div style="color:${n.read?'#7a8598':'#7fd1ff'};font-size:11px;margin-bottom:4px;">${n.text}</div>`;
-
       if (n.type === "harac" && !n.read) {
-        const btns = document.createElement("div");
-        btns.style.display = "flex"; btns.style.gap = "4px"; btns.style.marginTop = "4px";
-        const b1 = document.createElement("button"); b1.textContent = "ÖDE"; b1.className = "buy";
+        const btns = document.createElement("div"); btns.style.display="flex"; btns.style.gap="4px"; btns.style.marginTop="4px";
+        const b1 = document.createElement("button"); b1.textContent="ÖDE"; b1.className="buy";
         b1.onclick = () => payHarac(n, idx);
-        const b2 = document.createElement("button"); b2.textContent = "REDDET"; b2.className = "attack";
+        const b2 = document.createElement("button"); b2.textContent="REDDET"; b2.className="attack";
         b2.onclick = () => rejectHarac(n, idx);
-        btns.appendChild(b1); btns.appendChild(b2);
-        row.appendChild(btns);
+        btns.appendChild(b1); btns.appendChild(b2); row.appendChild(btns);
       } else if (n.type === "harac_rejected" && !n.read) {
-        const btns = document.createElement("div");
-        btns.style.display = "flex"; btns.style.gap = "4px"; btns.style.marginTop = "4px";
-        const b1 = document.createElement("button"); b1.textContent = "VAZGEÇ";
+        const btns = document.createElement("div"); btns.style.display="flex"; btns.style.gap="4px"; btns.style.marginTop="4px";
+        const b1 = document.createElement("button"); b1.textContent="VAZGEÇ";
         b1.onclick = () => dismissNotification(idx);
-        const b2 = document.createElement("button"); b2.textContent = "SALDIR"; b2.className = "attack";
+        const b2 = document.createElement("button"); b2.textContent="SALDIR"; b2.className="attack";
         b2.onclick = () => openAttackMenu(n);
-        btns.appendChild(b1); btns.appendChild(b2);
-        row.appendChild(btns);
+        btns.appendChild(b1); btns.appendChild(b2); row.appendChild(btns);
       } else {
-        const c = document.createElement("button"); c.textContent = "OKUNDU"; c.style.marginTop = "4px";
+        const c = document.createElement("button"); c.textContent="OKUNDU"; c.style.marginTop="4px";
         c.onclick = () => dismissNotification(idx);
         row.appendChild(c);
       }
       box.appendChild(row);
     });
-  } catch(e){ console.warn("renderNotif", e); }
-}
-
-async function dismissNotification(idx) {
-  try {
-    const u = uid(); if (!u) return;
-    const ref = doc(db, "users", u);
-    const snap = await getDoc(ref);
-    const d = snap.data();
-    const notifs = d.notifications || [];
-    if (notifs[idx]) notifs[idx].read = true;
-    await updateDoc(ref, { notifications: notifs });
-    renderNotifications();
   } catch(e){}
 }
+async function dismissNotification(idx) {
+  const u = uid(); if (!u) return;
+  const ref = doc(db, "users", u);
+  const snap = await getDoc(ref); const d = snap.data();
+  const notifs = d.notifications || [];
+  if (notifs[idx]) notifs[idx].read = true;
+  await updateDoc(ref, { notifications: notifs });
+  renderNotifications();
+}
 
-/* ============ HARAÇ ============ */
+/* HARAÇ */
 async function sendHarac(targetUid, targetName, amount) {
   try {
     if (await isInJail()) return;
     if (await isHiding()) return toast("Saklanırken haraç kesemezsin.");
     const u = uid(); const uName = currentUserData?.name || "?";
-    await addNotification(targetUid, {
-      type: "harac",
-      from: u,
-      fromName: uName,
-      amount: amount,
-      text: `💰 ${uName} senden ${amount.toLocaleString()} TL haraç istiyor.`
-    });
+    await addNotification(targetUid, { type:"harac", from:u, fromName:uName, amount:amount,
+      text:`💰 ${uName} senden ${amount.toLocaleString()} TL haraç istiyor.` });
     toast(`Haraç isteği gönderildi: ${targetName}`);
     log(`📤 Haraç kesildi: ${targetName} - ${amount} TL`);
     tgLog(`💸 <b>HARAÇ</b>\n${uName} → ${targetName}\n${amount} TL`);
   } catch(e){ toast("Hata: " + e.message); }
 }
-
 async function payHarac(n, idx) {
   try {
     const u = uid(); if (!u) return;
     const ref = doc(db, "users", u);
-    const snap = await getDoc(ref);
-    const d = snap.data();
-    if (d.cash < n.amount) return toast("Yetersiz nakit! Haraç ödeyemiyorsun.");
+    const snap = await getDoc(ref); const d = snap.data();
+    if (d.cash < n.amount) return toast("Yetersiz nakit!");
     await updateDoc(ref, { cash: d.cash - n.amount });
-    // Karşı tarafa para
-    const targetRef = doc(db, "users", n.from);
-    const tSnap = await getDoc(targetRef);
-    const tD = tSnap.data();
-    await updateDoc(targetRef, { cash: (tD.cash || 0) + n.amount });
-    // Bildirim okundu
+    const tRef = doc(db, "users", n.from);
+    const tSnap = await getDoc(tRef); const tD = tSnap.data();
+    await updateDoc(tRef, { cash: (tD.cash||0) + n.amount });
     const notifs = d.notifications || [];
     if (notifs[idx]) notifs[idx].read = true;
     await updateDoc(ref, { notifications: notifs });
-    await addNotification(n.from, { type: "info", text: `✅ ${d.name} haraçı ödedi: +${n.amount.toLocaleString()} TL` });
+    await addNotification(n.from, { type:"info", text:`✅ ${d.name} haraçı ödedi: +${n.amount.toLocaleString()} TL` });
     toast("Haraç ödendi.");
-    log(`✅ Haraç ödendi: ${n.amount} TL → ${n.fromName}`);
     await refreshAll();
   } catch(e){ toast("Hata: " + e.message); }
 }
-
 async function rejectHarac(n, idx) {
   try {
     const u = uid(); if (!u) return;
     const ref = doc(db, "users", u);
-    const snap = await getDoc(ref);
-    const d = snap.data();
+    const snap = await getDoc(ref); const d = snap.data();
     const notifs = d.notifications || [];
     if (notifs[idx]) notifs[idx].read = true;
     await updateDoc(ref, { notifications: notifs });
-    await addNotification(n.from, {
-      type: "harac_rejected",
-      target: u,
-      targetName: d.name,
-      amount: n.amount,
-      text: `❌ ${d.name} haraçı reddetti! Ne yapacaksın?`
-    });
+    await addNotification(n.from, { type:"harac_rejected", target:u, targetName:d.name, amount:n.amount,
+      text:`❌ ${d.name} haraçı reddetti! Ne yapacaksın?` });
     toast("Haraç reddedildi.");
     await refreshAll();
   } catch(e){ toast("Hata: " + e.message); }
 }
 
-/* ============ SALDIRI MENÜSÜ ============ */
+/* SALDIRI */
 function openAttackMenu(n) {
-  const attackPlans = [
-    { name:"🥊 Sadece döv", risk:0.20, jail:5, desc:"Hedefi bayılt. Kaybeden: nakit %30", type:"dov" },
-    { name:"🔪 Yarala", risk:0.40, jail:10, desc:"Hedef: nakit %50 + envanter %25, can -25", type:"yarala" },
-    { name:"⚔️ Ağır yarala", risk:0.55, jail:15, desc:"Hedef: nakit %70 + envanter %50, can -40", type:"agir" },
-    { name:"💀 Öldür", risk:0.75, jail:30, desc:"Hedef: TÜM nakit + TÜM envanter, can 0 → ölüm. Ağır ceza.", type:"oldur" }
+  const plans = [
+    { name:"🥊 Sadece döv", risk:0.20, jail:5, desc:"Hedef nakit %30 kaybeder", type:"dov" },
+    { name:"🔪 Yarala", risk:0.40, jail:10, desc:"Nakit %50 + envanter %25, can -25", type:"yarala" },
+    { name:"⚔️ Ağır yarala", risk:0.55, jail:15, desc:"Nakit %70 + envanter %50, can -40", type:"agir" },
+    { name:"💀 Öldür", risk:0.75, jail:30, desc:"TÜM nakit + TÜM envanter, can 0", type:"oldur" }
   ];
-  openModal(
-    "⚔️ SALDIRI TÜRÜ SEÇ",
-    `Hedef: ${n.targetName} | Haraç: ${n.amount.toLocaleString()} TL`,
-    attackPlans,
-    async (plan) => { await performAttack(n, plan); }
-  );
+  openModal("⚔️ SALDIRI TÜRÜ SEÇ", `Hedef: ${n.targetName}`, plans, async (plan) => {
+    await performAttack(n, plan);
+  });
 }
-
 async function performAttack(n, plan) {
   try {
     if (await isInJail()) return;
     const u = uid(); if (!u) return;
     const myRef = doc(db, "users", u);
-    const mySnap = await getDoc(myRef);
-    const me = mySnap.data();
+    const mySnap = await getDoc(myRef); const me = mySnap.data();
+    const tRef = doc(db, "users", n.target);
+    const tSnap = await getDoc(tRef); const tgt = tSnap.data();
+    if (!tgt) return toast("Hedef yok.");
 
-    const targetRef = doc(db, "users", n.target);
-    const targetSnap = await getDoc(targetRef);
-    const tgt = targetSnap.data();
+    if (tgt.hiding && tgt.hidingUntil > Date.now()) return toast("🚫 Hedef saklanıyor! Evini bul.");
 
-    if (!tgt) return toast("Hedef bulunamadı.");
-
-    // Hedef saklanıyor mu?
-    if (tgt.hiding && tgt.hidingUntil > Date.now()) {
-      return toast("🚫 Hedef saklanıyor! Önce evini bulman lazım.");
-    }
-
-    // Saldıran gücü
     const myWeapon = getBestWeapon(me.inventory || {});
-    const attackBonus = { dov: 0, yarala: 2, agir: 4, oldur: 6 }[plan.type] || 0;
-    const myPower = (myWeapon.power || 1) + attackBonus + rnd(1, 10);
+    const bonus = { dov:0, yarala:2, agir:4, oldur:6 }[plan.type] || 0;
+    const myPower = (myWeapon.power || 1) + bonus + rnd(1, 10);
 
-    // Savunan gücü
     const tgtWeapon = getBestWeapon(tgt.inventory || {});
     let tgtPower = (tgtWeapon.power || 1) + rnd(1, 10);
-    if (tgt.health >= 80) tgtPower += 2;
+    if (tgt.health >= 40) tgtPower += 2;
     if (tgt.energy >= 80) tgtPower += 2;
     if (hasItem(tgt.inventory || {}, "kacisArabasi")) tgtPower += 3;
 
-    const saldiranKazandi = myPower > tgtPower;
+    const kazandi = myPower > tgtPower;
 
-    let logMsg = `⚔️ ${me.name} (${myPower}) vs ${tgt.name} (${tgtPower})`;
+    if (kazandi) {
+      let nakit = 0, envY = 0, can = 0;
+      if (plan.type==="dov") { nakit=Math.floor((tgt.cash||0)*0.30); envY=0; can=10; }
+      else if (plan.type==="yarala") { nakit=Math.floor((tgt.cash||0)*0.50); envY=0.25; can=25; }
+      else if (plan.type==="agir") { nakit=Math.floor((tgt.cash||0)*0.70); envY=0.50; can=40; }
+      else { nakit=tgt.cash||0; envY=1.0; can=999; }
 
-    if (saldiranKazandi) {
-      // Ganimet hesapla
-      let nakit = 0, envYuzde = 0, canKaybi = 0;
-      if (plan.type === "dov") { nakit = Math.floor((tgt.cash||0) * 0.30); envYuzde = 0; canKaybi = 10; }
-      else if (plan.type === "yarala") { nakit = Math.floor((tgt.cash||0) * 0.50); envYuzde = 0.25; canKaybi = 25; }
-      else if (plan.type === "agir") { nakit = Math.floor((tgt.cash||0) * 0.70); envYuzde = 0.50; canKaybi = 40; }
-      else if (plan.type === "oldur") { nakit = tgt.cash || 0; envYuzde = 1.0; canKaybi = 999; }
-
-      // Envanteri çal
-      const yeniEnv = {};
-      Object.keys(tgt.inventory || {}).forEach(k => {
-        const adet = tgt.inventory[k];
-        const calinan = Math.floor(adet * envYuzde);
-        const kalan = adet - calinan;
-        if (calinan > 0) {
-          yeniEnv[k] = (me.inventory[k] || 0) + calinan;
-        }
-        if (kalan > 0) {
-          // kalan hedefte
-        }
-      });
-
-      // Kalan envanter (öldür ise hepsi gider)
-      const kalanEnv = plan.type === "oldur" ? {} : Object.keys(tgt.inventory || {}).reduce((a, k) => {
-        const adet = tgt.inventory[k];
-        const kalan = adet - Math.floor(adet * envYuzde);
-        if (kalan > 0) a[k] = kalan;
-        return a;
-      }, {});
-
-      // Kaybedene ceza
-      const yeniSaglik = plan.type === "oldur" ? 0 : Math.max(0, (tgt.health || 50) - canKaybi);
-      const hedefHapis = plan.type === "oldur" ? Date.now() + 60*60*1000 : Date.now() + 15*60*1000;
-
-      await updateDoc(targetRef, {
-        cash: Math.max(0, (tgt.cash || 0) - nakit),
-        inventory: kalanEnv,
-        health: yeniSaglik,
-        wanted: Math.min(100, (tgt.wanted || 0) + 30),
-        jailUntil: hedefHapis
-      });
-
-      // Saldırana ganimet + hasar
-      // [4=A] saldıran karşı savunmadan hasar alır
-      let saldiranHasar = 0;
-      if (plan.type === "oldur") saldiranHasar = 30;
-      else if (plan.type === "agir") saldiranHasar = 20;
-      else if (plan.type === "yarala") saldiranHasar = 10;
-      else saldiranHasar = 5;
-
-      const yeniEnvM = { ...(me.inventory || {}) };
-      Object.keys(yeniEnv).forEach(k => { yeniEnvM[k] = yeniEnv[k]; });
-
-      const yeniCan = Math.max(1, (me.health || 50) - saldiranHasar);
-
-      await updateDoc(myRef, {
-        cash: (me.cash || 0) + nakit,
-        inventory: yeniEnvM,
-        health: yeniCan,
-        wanted: Math.min(100, (me.wanted || 0) + (plan.type === "oldur" ? 40 : 20)),
-        jailUntil: Date.now() + plan.jail * 60 * 1000
-      });
-
-      toast(`✅ Kazandın! +${nakit.toLocaleString()} TL, envanter yağmalandı. -${saldiranHasar} can.`);
-      log(`${logMsg} → KAZANDI (+${nakit} TL)`);
-
-      await addNotification(n.target, {
-        type: "info",
-        text: `🚨 ${me.name} sana saldırdı ve kazandı! ${plan.type === "oldur" ? "ÖLDÜN." : `-${nakit.toLocaleString()} TL, -${canKaybi} can.`}`
-      });
-
-      tgLog(`⚔️ <b>SALDIRI</b>\n${me.name} → ${tgt.name}\nSonuç: ${me.name} kazandı\nTip: ${plan.name}`);
-    } else {
-      // Savunan kazandı
-      // Saldıran kendi seçtiği cezayı yaşar
-      let nakitKaybi = 0, envYuzde = 0, canKaybi = 0;
-      if (plan.type === "dov") { nakitKaybi = Math.floor((me.cash||0) * 0.30); envYuzde = 0; canKaybi = 10; }
-      else if (plan.type === "yarala") { nakitKaybi = Math.floor((me.cash||0) * 0.50); envYuzde = 0.25; canKaybi = 25; }
-      else if (plan.type === "agir") { nakitKaybi = Math.floor((me.cash||0) * 0.70); envYuzde = 0.50; canKaybi = 40; }
-      else if (plan.type === "oldur") { nakitKaybi = me.cash || 0; envYuzde = 1.0; canKaybi = 999; }
-
-      // Savunana ganimet
-      const kalanEnv = plan.type === "oldur" ? {} : Object.keys(me.inventory || {}).reduce((a, k) => {
-        const adet = me.inventory[k];
-        const kalan = adet - Math.floor(adet * envYuzde);
-        if (kalan > 0) a[k] = kalan;
-        return a;
-      }, {});
       const calinan = {};
-      Object.keys(me.inventory || {}).forEach(k => {
-        const c = Math.floor(me.inventory[k] * envYuzde);
+      Object.keys(tgt.inventory || {}).forEach(k => {
+        const c = Math.floor(tgt.inventory[k] * envY);
         if (c > 0) calinan[k] = c;
       });
+      const kalanEnv = plan.type === "oldur" ? {} : Object.keys(tgt.inventory || {}).reduce((a,k)=>{
+        const kalan = tgt.inventory[k] - Math.floor(tgt.inventory[k]*envY);
+        if (kalan > 0) a[k] = kalan;
+        return a;
+      }, {});
 
-      const tEnv = { ...(tgt.inventory || {}) };
-      Object.keys(calinan).forEach(k => { tEnv[k] = (tEnv[k] || 0) + calinan[k]; });
+      const yeniCan = plan.type === "oldur" ? 0 : Math.max(0, (tgt.health||50) - can);
+      const hapis = plan.type === "oldur" ? Date.now()+60*60*1000 : Date.now()+15*60*1000;
 
-      const hedefKazandi = plan.type === "oldur";
-      const yeniSaglik = hedefKazandi ? 0 : Math.max(0, (me.health || 50) - canKaybi);
+      await updateDoc(tRef, { cash: Math.max(0, (tgt.cash||0)-nakit), inventory: kalanEnv, health: yeniCan, wanted: Math.min(100,(tgt.wanted||0)+30), jailUntil: hapis });
+
+      // Saldıran hasar alır (4=A)
+      const hasar = plan.type==="oldur"?30:plan.type==="agir"?20:plan.type==="yarala"?10:5;
+      const yeniEnvM = { ...(me.inventory||{}) };
+      Object.keys(calinan).forEach(k => { yeniEnvM[k] = (yeniEnvM[k]||0) + calinan[k]; });
+      const yeniCanM = Math.max(1, (me.health||50) - hasar);
 
       await updateDoc(myRef, {
-        cash: Math.max(0, (me.cash || 0) - nakitKaybi),
-        inventory: kalanEnv,
-        health: yeniSaglik,
-        wanted: Math.min(100, (me.wanted || 0) + 25),
-        jailUntil: hedefKazandi ? Date.now() + 60*60*1000 : Date.now() + 20*60*1000
+        cash: (me.cash||0)+nakit, inventory: yeniEnvM, health: yeniCanM,
+        wanted: Math.min(100, (me.wanted||0) + (plan.type==="oldur"?40:20)),
+        jailUntil: Date.now() + plan.jail*60*1000
       });
 
-      await updateDoc(targetRef, {
-        cash: (tgt.cash || 0) + nakitKaybi,
-        inventory: tEnv,
-        wanted: Math.min(100, (tgt.wanted || 0) + 5)
-      });
+      toast(`✅ Kazandın! +${nakit.toLocaleString()} TL, -${hasar} can.`);
+      await addNotification(n.target, { type:"info", text:`🚨 ${me.name} sana saldırdı! ${plan.type==="oldur"?"ÖLDÜN.":`-${nakit.toLocaleString()} TL`}` });
+      tgLog(`⚔️ <b>SALDIRI</b>\n${me.name} → ${tgt.name}\nKazanan: ${me.name}`);
+    } else {
+      let nakit = 0, envY = 0, can = 0;
+      if (plan.type==="dov") { nakit=Math.floor((me.cash||0)*0.30); envY=0; can=10; }
+      else if (plan.type==="yarala") { nakit=Math.floor((me.cash||0)*0.50); envY=0.25; can=25; }
+      else if (plan.type==="agir") { nakit=Math.floor((me.cash||0)*0.70); envY=0.50; can=40; }
+      else { nakit=me.cash||0; envY=1.0; can=999; }
 
-      toast(`❌ Kaybettin! -${nakitKaybi.toLocaleString()} TL, envanter yarısı gitti.`);
-      log(`${logMsg} → KAYBETTİ (-${nakitKaybi} TL)`);
+      const calinan = {};
+      Object.keys(me.inventory||{}).forEach(k => { const c=Math.floor(me.inventory[k]*envY); if(c>0) calinan[k]=c; });
+      const kalanEnv = plan.type==="oldur"?{}:Object.keys(me.inventory||{}).reduce((a,k)=>{
+        const kalan = me.inventory[k] - Math.floor(me.inventory[k]*envY);
+        if (kalan>0) a[k]=kalan; return a;
+      },{});
+      const tEnv = { ...(tgt.inventory||{}) };
+      Object.keys(calinan).forEach(k => { tEnv[k] = (tEnv[k]||0)+calinan[k]; });
 
-      await addNotification(n.target, {
-        type: "info",
-        text: `🛡️ ${me.name} sana saldırdı ama kazandın! +${nakitKaybi.toLocaleString()} TL ve envanterinin bir kısmı sende.`
-      });
+      const yeniCan = plan.type==="oldur"?0:Math.max(0,(me.health||50)-can);
+      await updateDoc(myRef, { cash: Math.max(0,(me.cash||0)-nakit), inventory: kalanEnv, health: yeniCan, wanted: Math.min(100,(me.wanted||0)+25), jailUntil: plan.type==="oldur"?Date.now()+60*60*1000:Date.now()+20*60*1000 });
+      await updateDoc(tRef, { cash: (tgt.cash||0)+nakit, inventory: tEnv, wanted: Math.min(100,(tgt.wanted||0)+5) });
 
-      tgLog(`⚔️ <b>SALDIRI</b>\n${me.name} → ${tgt.name}\nSonuç: ${tgt.name} kazandı (savundu)`);
+      toast(`❌ Kaybettin! -${nakit.toLocaleString()} TL`);
+      await addNotification(n.target, { type:"info", text:`🛡️ ${me.name} sana saldırdı ama kazandın!` });
+      tgLog(`⚔️ <b>SALDIRI</b>\n${me.name} → ${tgt.name}\nKazanan: ${tgt.name}`);
     }
-
     await refreshAll();
-  } catch(e) {
-    toast("Saldırı hatası: " + e.message);
-    console.error(e);
-  }
+  } catch(e){ toast("Saldırı: " + e.message); }
 }
 
-/* ============ EV BULMA ============ */
-async function findHouse(targetUid, targetName, hidingIn) {
+/* EV BULMA */
+async function findHouse(targetUid, targetName) {
   try {
     const u = uid(); if (!u) return;
     const myRef = doc(db, "users", u);
-    const snap = await getDoc(myRef);
-    const me = snap.data();
-    if ((me.cash || 0) < DETECTIVE_COST) return toast("Yetersiz nakit. Dedektif ücreti: " + DETECTIVE_COST.toLocaleString() + " TL");
-    if (!confirm(`${targetName} kullanıcısının evini bulmak için ${DETECTIVE_COST.toLocaleString()} TL ödeyeceksin. Emin misin?`)) return;
-
+    const snap = await getDoc(myRef); const me = snap.data();
+    if ((me.cash||0) < DETECTIVE_COST) return toast("Yetersiz nakit! " + DETECTIVE_COST.toLocaleString() + " TL gerekli.");
+    if (!confirm(`${targetName}'in evini bulmak için ${DETECTIVE_COST.toLocaleString()} TL öde?`)) return;
     await updateDoc(myRef, { cash: me.cash - DETECTIVE_COST });
-
-    const targetRef = doc(db, "users", targetUid);
-    await updateDoc(targetRef, { hiding: false, hidingUntil: 0, hidingIn: "" });
-
-    toast(`🕵️ ${targetName} bulundu! Saklanma bitti.`);
-    log(`🕵️ Ev bulundu: ${targetName} (${hidingIn || "?"}) - ${DETECTIVE_COST} TL`);
-    tgLog(`🕵️ <b>EV BULMA</b>\n${me.name} → ${targetName}\n${DETECTIVE_COST} TL`);
+    await updateDoc(doc(db,"users",targetUid), { hiding:false, hidingUntil:0, hidingIn:"" });
+    toast(`🕵️ ${targetName} bulundu!`);
+    tgLog(`🕵️ EV BULMA\n${me.name} → ${targetName}`);
     await refreshAll();
   } catch(e){ toast("Hata: " + e.message); }
 }
 
-/* ============ OYUNCU PANELİ ÇİZİM ============ */
+/* OYUNCU PANEL */
 async function renderPlayers() {
   try {
     const box = $("playersBox"); box.innerHTML = "";
     const players = await loadPlayers();
-    const search = $("playersSearch") ? $("playersSearch").value.toLowerCase() : "";
+    const input = document.createElement("input");
+    input.id = "playersSearch"; input.placeholder = "Oyuncu ara...";
+    input.style.cssText = "width:100%;padding:10px;background:#0d0d18;color:#e0e0e0;border:1px solid #24243a;border-radius:8px;font-size:12px;margin-bottom:8px;";
+    box.appendChild(input);
 
-    const filtered = search ? players.filter(p => (p.name||"").toLowerCase().includes(search)) : players;
+    const search = "";
+    const listDiv = document.createElement("div");
+    listDiv.id = "playerListBox";
+    box.appendChild(listDiv);
 
-    if (filtered.length === 0) {
-      box.innerHTML = `<div class="row"><span class="label" style="color:#556080;">Oyuncu bulunamadı</span></div>`;
-      return;
-    }
-
-    filtered.slice(0, 20).forEach(p => {
-      const card = document.createElement("div"); card.className = "player-card";
-      const hide = p.hiding && p.hidingUntil > Date.now();
-      card.innerHTML = `<div class="pname">${p.name} ${hide ? '🥷 (SAKLANIYOR)' : ''}</div>
-        <div class="pmeta">💰 ${Math.floor(p.cash||0).toLocaleString()} TL • ❤️ ${p.health||0} • 🚨 ${p.wanted||0}</div>`;
-
-      const btns = document.createElement("div"); btns.className = "pbuttons";
-
-      if (!hide) {
-        const hb = document.createElement("button"); hb.textContent = "💰 Haraç Kes";
-        hb.onclick = () => openHaracMenu(p);
-        const sb = document.createElement("button"); sb.textContent = "⚔️ Saldır"; sb.className = "danger";
-        sb.onclick = () => openDirectAttack(p);
-        btns.appendChild(hb); btns.appendChild(sb);
-      } else {
-        const fb = document.createElement("button"); fb.textContent = "🕵️ Evini Bul (" + DETECTIVE_COST.toLocaleString() + " TL)"; fb.className = "danger";
-        fb.onclick = () => findHouse(p.id, p.name, p.hidingIn);
-        btns.appendChild(fb);
-      }
-      card.appendChild(btns);
-      box.appendChild(card);
-    });
-  } catch(e){ console.warn("renderPlayers", e); }
+    const renderList = () => {
+      const s = input.value.toLowerCase();
+      const filtered = s ? players.filter(p => (p.name||"").toLowerCase().includes(s)) : players;
+      listDiv.innerHTML = "";
+      if (filtered.length === 0) { listDiv.innerHTML = `<div class="row"><span class="label" style="color:#556080;">Bulunamadı</span></div>`; return; }
+      filtered.slice(0, 15).forEach(p => {
+        const hide = p.hiding && p.hidingUntil > Date.now();
+        const card = document.createElement("div"); card.className = "player-card";
+        card.innerHTML = `<div class="pname">${p.name} ${hide?'🥷':''}</div>
+          <div class="pmeta">💰 ${Math.floor(p.cash||0).toLocaleString()} TL • ❤️ ${p.health||0} • 🚨 ${p.wanted||0}</div>`;
+        const btns = document.createElement("div"); btns.className = "pbuttons";
+        if (!hide) {
+          const hb = document.createElement("button"); hb.textContent = "💰 Haraç";
+          hb.onclick = () => openHaracMenu(p);
+          const sb = document.createElement("button"); sb.textContent = "⚔️ Saldır"; sb.className = "danger";
+          sb.onclick = () => openDirectAttack(p);
+          btns.appendChild(hb); btns.appendChild(sb);
+        } else {
+          const fb = document.createElement("button"); fb.textContent = "🕵️ Bul (" + DETECTIVE_COST.toLocaleString() + ")"; fb.className = "danger";
+          fb.onclick = () => findHouse(p.id, p.name);
+          btns.appendChild(fb);
+        }
+        card.appendChild(btns);
+        listDiv.appendChild(card);
+      });
+    };
+    input.oninput = renderList;
+    renderList();
+  } catch(e){}
 }
 
 function openHaracMenu(target) {
-  const modal = `
-    <h3>💰 HARAÇ KES — ${target.name}</h3>
-    <div class="modalSub">Hedefin nakiti: ${Math.floor(target.cash||0).toLocaleString()} TL</div>
-    <div class="field"><label>Haraç Miktarı (TL)</label><input id="haracAmount" type="number" placeholder="5000" min="100" /></div>
-    <div class="plan safe" id="haracQuick">
-      <h4>Hızlı seçenekler</h4>
-      <div class="meta" id="haracQuickBtns"></div>
+  $("modalTitle").style.display = "block";
+  $("modalSub").style.display = "block";
+  $("modalTitle").textContent = "💰 HARAÇ KES — " + target.name;
+  $("modalSub").textContent = "Hedef nakit: " + Math.floor(target.cash||0).toLocaleString() + " TL";
+  $("modalPlans").innerHTML = `
+    <div class="field"><label>Miktar (TL)</label><input id="haracAmount" type="number" placeholder="5000" style="width:100%;padding:10px;background:#0d0d18;color:#e0e0e0;border:1px solid #24243a;border-radius:8px;" /></div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;">
+      ${[1000,5000,10000,50000].map(a=>`<button class="buy" onclick="document.getElementById('haracAmount').value=${a}">${a.toLocaleString()}</button>`).join("")}
     </div>
     <button class="cancelBtn" id="haracConfirm" style="background:linear-gradient(135deg,#2a4a7a,#1e3a5a);color:#fff;font-weight:700;">HARAÇ GÖNDER</button>
-    <button class="cancelBtn" onclick="closeModal && closeModal()">İPTAL</button>
   `;
-  $("modalTitle").textContent = "";
-  $("modalSub").textContent = "";
-  $("modalPlans").innerHTML = modal;
-  $("modalTitle").style.display = "none";
-  $("modalSub").style.display = "none";
-
-  const maxAmount = Math.max(100, Math.floor((target.cash||0)));
-  const quickBtns = $("haracQuickBtns");
-  [1000, 5000, 10000, 50000].forEach(amt => {
-    const b = document.createElement("button");
-    b.textContent = amt.toLocaleString() + " TL";
-    b.className = "buy";
-    b.onclick = () => { $("haracAmount").value = amt; };
-    quickBtns.appendChild(b);
-  });
-
   $("haracConfirm").onclick = async () => {
     const amt = parseInt($("haracAmount").value);
     if (!amt || amt < 100) return toast("Min 100 TL");
-    if (amt > maxAmount) return toast("Hedefin bu kadar nakiti yok.");
     closeModal();
     await sendHarac(target.id, target.name, amt);
   };
-
   $("modalOverlay").classList.add("show");
 }
 
 function openDirectAttack(target) {
   const plans = [
-    { name:"🥊 Sadece döv", risk:0.20, jail:5, desc:"Nakit %30 hedefe gitmez", type:"dov" },
+    { name:"🥊 Sadece döv", risk:0.20, jail:5, desc:"Nakit %30 hedefe", type:"dov" },
     { name:"🔪 Yarala", risk:0.40, jail:10, desc:"Nakit %50, envanter %25", type:"yarala" },
     { name:"⚔️ Ağır yarala", risk:0.55, jail:15, desc:"Nakit %70, envanter %50", type:"agir" },
-    { name:"💀 Öldür", risk:0.75, jail:30, desc:"TÜM nakit + TÜM envanter. Ağır suç.", type:"oldur" }
+    { name:"💀 Öldür", risk:0.75, jail:30, desc:"TÜM nakit + envanter", type:"oldur" }
   ];
-  openModal(
-    `⚔️ SALDIR — ${target.name}`,
-    `Hedef nakit: ${Math.floor(target.cash||0).toLocaleString()} TL`,
-    plans,
-    async (plan) => {
-      // Doğrudan saldırı: haraç reddi olmadan
-      await performAttack({ target: target.id, targetName: target.name, amount: 0 }, plan);
-    }
-  );
+  openModal("⚔️ SALDIR — " + target.name, "Hedef: " + Math.floor(target.cash||0).toLocaleString() + " TL", plans, async (plan) => {
+    await performAttack({ target: target.id, targetName: target.name, amount: 0 }, plan);
+  });
 }
 
-/* ============ SUÇ İŞLEME ============ */
+/* SUÇ İŞLEME */
 async function attemptCrime(crimeId) {
   try {
-    if (await isInJail()) return;
-    if (await isHiding()) return toast("Saklanırken suç işleyemezsin.");
+    if (await isInJail() || await isHiding()) return;
     const u = uid(); if (!u) return;
     const crime = CRIMES.find(c => c.id === crimeId);
     const ref = doc(db, "users", u);
-    const snap = await getDoc(ref);
-    const d = snap.data();
+    const snap = await getDoc(ref); const d = snap.data();
     const inv = d.inventory || {};
-
     if (!hasAny(inv, crime.requires)) {
       const gerekli = crime.requires.map(k => ITEMS[k] ? ITEMS[k].icon + " " + ITEMS[k].name : k).join(" veya ");
-      return toast("❌ Gerekli eşya: " + gerekli);
+      return toast("❌ Gerekli: " + gerekli);
     }
-
     const bestKey = getBestWeapon(inv).key;
-
-    openModal(
-      `${crime.icon} ${crime.name}`,
-      `En iyi silahın: ${bestKey ? ITEMS[bestKey].icon + " " + ITEMS[bestKey].name : "yok"}`,
-      crime.plans,
-      async (plan) => { await executeCrime(crime, plan, d, ref); }
-    );
+    openModal(`${crime.icon} ${crime.name}`, `En iyi: ${bestKey ? ITEMS[bestKey].icon + " " + ITEMS[bestKey].name : "-"}`, crime.plans, async (plan) => {
+      await executeCrime(crime, plan, d, ref);
+    });
   } catch(e){ toast("Hata: " + e.message); }
 }
 
 async function executeCrime(crime, plan, d, ref) {
   try {
     const inv = d.inventory || {};
-    let risk = plan.risk;
-    let gain = 1.0;
-    let wantedMult = 1.0;
-
+    let risk = plan.risk, gain = 1.0, wMult = 1.0;
     Object.keys(inv).forEach(k => {
       if (!hasItem(inv, k)) return;
-      const it = ITEMS[k];
-      if (!it || !it.efekt) return;
-      const globalItems = ["maske","eldiven","kacisArabasi","jammer"];
-      const isGlobal = globalItems.includes(k);
-      const isRequired = crime.requires.includes(k);
-      if (isGlobal || isRequired) {
+      const it = ITEMS[k]; if (!it || !it.efekt) return;
+      const glob = ["maske","eldiven","kacisArabasi","jammer"].includes(k);
+      const req = crime.requires.includes(k);
+      if (glob || req) {
         if (it.efekt.risk) risk += it.efekt.risk;
         if (it.efekt.gain) gain += it.efekt.gain;
-        if (it.efekt.wanted) wantedMult += it.efekt.wanted;
+        if (it.efekt.wanted) wMult += it.efekt.wanted;
       }
     });
     risk = Math.max(0.05, Math.min(0.98, risk));
 
     if (plan.bribe) {
-      if (d.cash < plan.bribe) return toast("Rüşvet için paran yok.");
+      if (d.cash < plan.bribe) return toast("Rüşvet için para yok.");
       await updateDoc(ref, { cash: d.cash - plan.bribe });
       d.cash -= plan.bribe;
     }
 
     const basarili = Math.random() > risk;
-    const yeniWanted = Math.min(100, (d.wanted || 0) + Math.round((basarili ? 8 : 25) * wantedMult));
+    const yeniWanted = Math.min(100, (d.wanted||0) + Math.round((basarili?8:25)*wMult));
 
     if (basarili) {
       const kazanc = Math.round(rnd(plan.min, plan.max) * gain);
       let ekHapis = 0;
       let msg = `✅ Başarılı! +${kazanc.toLocaleString()} TL`;
-      if (yeniWanted >= 100) { ekHapis = 15 * 60 * 1000; msg = `✅ +${kazanc.toLocaleString()} TL (aranma 100 → 15 dk hapis)`; }
-      await updateDoc(ref, { cash: d.cash + kazanc, wanted: yeniWanted, jailUntil: ekHapis ? Date.now() + ekHapis : (d.jailUntil || 0) });
+      if (yeniWanted >= 100) { ekHapis = 15*60*1000; msg = `✅ +${kazanc.toLocaleString()} TL (aranma 100 → 15 dk hapis)`; }
+      await updateDoc(ref, { cash: d.cash + kazanc, wanted: yeniWanted, jailUntil: ekHapis ? Date.now()+ekHapis : (d.jailUntil||0) });
       toast(msg);
-      log(`${crime.icon} ${crime.name} [${plan.name}]: +${kazanc.toLocaleString()} TL`);
+      log(`${crime.icon} ${crime.name} [${plan.name}]: +${kazanc} TL`);
       if (ekHapis) startJailCheck();
     } else {
       const ceza = Math.round(rnd(plan.min, plan.max) * 0.5);
-      const hapisMs = plan.jail * 60 * 1000;
-      await updateDoc(ref, { cash: Math.max(0, d.cash - ceza), wanted: yeniWanted, jailUntil: Date.now() + hapisMs });
+      await updateDoc(ref, { cash: Math.max(0, d.cash-ceza), wanted: yeniWanted, jailUntil: Date.now() + plan.jail*60*1000 });
       toast(`🚨 Yakalandın! -${ceza.toLocaleString()} TL, ${plan.jail} dk hapis.`);
-      log(`${crime.icon} ${crime.name}: YAKALANDI -${ceza.toLocaleString()} TL`);
+      log(`${crime.icon} ${crime.name}: YAKALANDI`);
       startJailCheck();
     }
     await refreshAll();
   } catch(e){ toast("Hata: " + e.message); }
 }
 
-/* ============ MAĞAZA ============ */
+/* MAĞAZA */
 async function buyItem(itemKey) {
   try {
-    if (await isInJail()) return;
-    if (await isHiding()) return toast("Saklanırken alışveriş yapamazsın.");
+    if (await isInJail() || await isHiding()) return;
     const u = uid(); if (!u) return;
     const it = ITEMS[itemKey];
     const ref = doc(db, "users", u);
-    const snap = await getDoc(ref);
-    const d = snap.data();
+    const snap = await getDoc(ref); const d = snap.data();
     if (d.cash < it.price) return toast("Yetersiz nakit.");
     const inv = d.inventory || {};
-    inv[itemKey] = (inv[itemKey] || 0) + 1;
+    inv[itemKey] = (inv[itemKey]||0) + 1;
     await updateDoc(ref, { cash: d.cash - it.price, inventory: inv });
     toast(`✅ ${it.icon} ${it.name} alındı`);
-    log(`🛒 ${it.icon} ${it.name} alındı: -${it.price.toLocaleString()} TL`);
     await refreshAll();
   } catch(e){ toast("Hata: " + e.message); }
 }
 
-/* ============ BORSA ============ */
+/* BORSA */
 async function buyCoin(symbol, amountTry) {
   try {
     if (await isInJail() || await isHiding()) return;
@@ -1243,11 +887,10 @@ async function sellCoin(symbol, adet) {
   } catch(e){ toast("Hata: " + e.message); }
 }
 
-/* ============ İŞ ============ */
+/* İŞ */
 async function work(jobId) {
   try {
-    if (await isInJail()) return;
-    if (await isHiding()) return toast("Saklanırken çalışamazsın.");
+    if (await isInJail() || await isHiding()) return;
     const u = uid(); if (!u) return;
     const job = JOBS.find(j => j.id === jobId);
     const ref = doc(db, "users", u);
@@ -1255,14 +898,14 @@ async function work(jobId) {
     if (d.energy < 10) return toast("Enerjin yok.");
     let pay = job.pay;
     const kaza = Math.random() < job.risk;
-    if (kaza) pay = Math.floor(pay * 0.3);
+    if (kaza) pay = Math.floor(pay*0.3);
     await updateDoc(ref, { cash: d.cash + pay, energy: Math.max(0, d.energy-10), health: Math.max(0, d.health - (kaza?5:0)) });
     toast(`+${pay} TL`);
     await refreshAll();
   } catch(e){ toast("Hata: " + e.message); }
 }
 
-/* ============ MÜLK ============ */
+/* MÜLK */
 async function buyAsset(assetId) {
   try {
     if (await isInJail() || await isHiding()) return;
@@ -1275,21 +918,20 @@ async function buyAsset(assetId) {
     assets.push({ id:a.id, name:a.name, buyPrice:a.price, income:a.income, shelter:a.shelter||false, shelterMin:a.shelterMin||0, buyAt:Date.now() });
     await updateDoc(ref, { cash: d.cash - a.price, assets });
     toast(`${a.name} alındı!`);
-    log(`🏪 ${a.name} alındı: -${a.price.toLocaleString()} TL`);
     await refreshAll();
   } catch(e){ toast("Hata: " + e.message); }
 }
 
-/* ============ BANKA ============ */
+/* BANKA */
 async function takeLoan(amount) {
   try {
     if (await isInJail() || await isHiding()) return;
     const u = uid(); if (!u) return;
     const ref = doc(db, "users", u);
     const snap = await getDoc(ref); const d = snap.data();
-    if ((d.debt||0)+amount > 50000) return toast("Kredi limiti 50.000 TL.");
+    if ((d.debt||0)+amount > 50000) return toast("Kredi limiti 50K.");
     await updateDoc(ref, { cash: d.cash + amount, debt: (d.debt||0) + Math.floor(amount*1.2) });
-    toast(`+${amount.toLocaleString()} TL kredi`);
+    toast(`+${amount} TL kredi`);
     await refreshAll();
   } catch(e){ toast("Hata: " + e.message); }
 }
@@ -1302,22 +944,21 @@ async function payDebt(amount) {
     if (d.cash < amount) return toast("Yetersiz nakit.");
     const yeni = Math.max(0, (d.debt||0)-amount);
     await updateDoc(ref, { cash: d.cash-amount, debt: yeni });
-    toast(`Borç ödendi`);
+    toast("Borç ödendi");
     await refreshAll();
   } catch(e){ toast("Hata: " + e.message); }
 }
 
-/* ============ HASTANE / YEMEK ============ */
+/* HASTANE / YEMEK */
 async function heal() {
   try {
     if (await isInJail() || await isHiding()) return;
     const u = uid(); if (!u) return;
     const ref = doc(db, "users", u);
     const snap = await getDoc(ref); const d = snap.data();
-    const ucret = 500;
-    if (d.cash < ucret) return toast("Yetersiz nakit.");
+    if (d.cash < 500) return toast("Yetersiz nakit.");
     if (d.health >= 50) return toast("Canın tam.");
-    await updateDoc(ref, { cash: d.cash - ucret, health: Math.min(50, (d.health||0) + 30) });
+    await updateDoc(ref, { cash: d.cash - 500, health: Math.min(50, (d.health||0)+30) });
     toast("+30 can");
     await refreshAll();
   } catch(e){ toast("Hata: " + e.message); }
@@ -1328,56 +969,44 @@ async function eat() {
     const u = uid(); if (!u) return;
     const ref = doc(db, "users", u);
     const snap = await getDoc(ref); const d = snap.data();
-    const ucret = 200;
-    if (d.cash < ucret) return toast("Yetersiz nakit.");
+    if (d.cash < 200) return toast("Yetersiz nakit.");
     if (d.energy >= 100) return toast("Enerjin tam.");
-    await updateDoc(ref, { cash: d.cash - ucret, energy: Math.min(100, (d.energy||0) + 20) });
+    await updateDoc(ref, { cash: d.cash - 200, energy: Math.min(100, (d.energy||0)+20) });
     toast("+20 enerji");
     await refreshAll();
   } catch(e){ toast("Hata: " + e.message); }
 }
 
-/* ============ PASİF GELİR + CAN YENİLEME ============ */
+/* PASİF */
 async function tickEffects() {
   try {
     const u = uid(); if (!u) return;
     const ref = doc(db, "users", u);
-    const snap = await getDoc(ref);
-    const d = snap.data();
+    const snap = await getDoc(ref); const d = snap.data();
     if (!d) return;
     const now = Date.now();
     let updates = {};
 
-    // Can yenileme: her 5 dk +1
-    const sonHealth = d.lastHealthTick || now;
-    if (now - sonHealth >= 5 * 60 * 1000) {
-      const artis = Math.floor((now - sonHealth) / (5 * 60 * 1000));
-      const yeniCan = Math.min(d.maxHealth || 50, (d.health || 0) + artis);
-      if (yeniCan !== d.health) updates.health = yeniCan;
+    const sonH = d.lastHealthTick || now;
+    if (now - sonH >= 5*60*1000) {
+      const artis = Math.floor((now - sonH) / (5*60*1000));
+      updates.health = Math.min(d.maxHealth||50, (d.health||0) + artis);
       updates.lastHealthTick = now;
     }
 
-    // Pasif gelir: her 5 dk
-    const sonIncome = d.lastIncome || now;
-    if (now - sonIncome >= 5 * 60 * 1000) {
+    const sonI = d.lastIncome || now;
+    if (now - sonI >= 5*60*1000) {
       let toplam = 0;
-      (d.assets || []).forEach(a => { toplam += (a.income || 0); });
-      if (toplam > 0) {
-        updates.cash = (d.cash || 0) + toplam;
-        log(`💰 Pasif gelir: +${toplam.toLocaleString()} TL`);
-      }
+      (d.assets||[]).forEach(a => { toplam += (a.income||0); });
+      if (toplam > 0) updates.cash = (d.cash||0) + toplam;
       updates.lastIncome = now;
     }
 
-    // Enerji yenileme: her dakika +1
-    const yeniEnerji = Math.min(100, (d.energy || 0) + 1);
-    if (yeniEnerji !== d.energy) updates.energy = yeniEnerji;
-
-    if (Object.keys(updates).length > 0) await updateDoc(ref, updates);
+    updates.energy = Math.min(100, (d.energy||0) + 1);
+    await updateDoc(ref, updates);
   } catch(e){}
 }
 
-/* ============ SIRALAMA ============ */
 async function refreshRanking() {
   try {
     const q = query(collection(db,"users"), orderBy("cash","desc"), limit(20));
@@ -1395,19 +1024,17 @@ async function refreshRanking() {
   } catch(e){}
 }
 
-/* ============ ANA REFRESH ============ */
+/* ANA REFRESH */
 async function refreshAll() {
   try {
     const u = uid(); if (!u) return;
     const ref = doc(db, "users", u);
     const snap = await getDoc(ref);
     if (!snap.exists()) { await ensureUserDoc(auth.currentUser); return; }
-    const d = snap.data();
-    if (!d) return;
+    const d = snap.data(); if (!d) return;
     currentUserData = d;
     const prices = await getMarket() || BASE_PRICE;
     const inv = d.inventory || {};
-
     const hiding = d.hiding && d.hidingUntil > Date.now();
     const isJail = d.jailUntil && d.jailUntil > Date.now();
 
@@ -1420,28 +1047,24 @@ async function refreshAll() {
       <div class="row"><span class="label">🔒 Hapis</span><span class="value ${isJail?"red":"green"}">${isJail?"EVET":"hayır"}</span></div>
       <div class="row"><span class="label">🥷 Saklanma</span><span class="value blue">${hiding?"EVET — "+(d.hidingIn||""):"hayır"}</span></div>`;
 
-    // Borsa
     const ml = $("marketList"); ml.innerHTML = "";
     COINS.forEach(c => {
       const f = prices[c] || BASE_PRICE[c];
       const row = document.createElement("div"); row.className = "row";
       row.innerHTML = `<span class="label">📈 ${c}</span><span class="value">${f}</span>`;
-      const b = document.createElement("button"); b.className="buy"; b.textContent="AL 100"; b.onclick = () => buyCoin(c, 100);
-      const s = document.createElement("button"); s.className="sell"; s.textContent="SAT"; s.onclick = () => sellCoin(c, 0.001);
+      const b = document.createElement("button"); b.className="buy"; b.textContent="AL 100"; b.onclick=()=>buyCoin(c,100);
+      const s = document.createElement("button"); s.className="sell"; s.textContent="SAT"; s.onclick=()=>sellCoin(c,0.001);
       row.appendChild(b); row.appendChild(s); ml.appendChild(row);
     });
 
-    // Portföy
     const al = $("assetList"); al.innerHTML = "";
     const port = d.portfolio || {};
     let bos = true;
     Object.keys(port).forEach(k => {
       bos = false;
-      const v = port[k] || { amount:0 };
-      const f = prices[k] || BASE_PRICE[k] || 0;
-      const deger = (v.amount * f).toFixed(2);
+      const v = port[k]; const f = prices[k] || BASE_PRICE[k];
       const row = document.createElement("div"); row.className = "row";
-      row.innerHTML = `<span class="label">💰 ${k}: ${v.amount}</span><span class="value green">${deger} TL</span>`;
+      row.innerHTML = `<span class="label">💰 ${k}: ${v.amount}</span><span class="value green">${(v.amount*f).toFixed(2)} TL</span>`;
       al.appendChild(row);
     });
     (d.assets||[]).forEach(a => {
@@ -1452,87 +1075,69 @@ async function refreshAll() {
     });
     if (bos) al.innerHTML = `<div class="row"><span class="label" style="color:#556080;">Boş</span></div>`;
 
-    // İşler
     const jl = $("jobList"); jl.innerHTML = "";
     JOBS.forEach(j => {
       const row = document.createElement("div"); row.className = "row";
       row.innerHTML = `<span class="label">${j.icon} ${j.name}</span><span class="value green">+${j.pay}</span>`;
-      const b = document.createElement("button"); b.className="work"; b.textContent="ÇALIŞ"; b.onclick = () => work(j.id);
+      const b = document.createElement("button"); b.className="work"; b.textContent="ÇALIŞ"; b.onclick=()=>work(j.id);
       row.appendChild(b); jl.appendChild(row);
     });
 
-    // Suçlar
     const cl = $("crimeBox"); cl.innerHTML = "";
     CRIMES.forEach(c => {
       const ok = hasAny(inv, c.requires);
-      const row = document.createElement("div"); row.className = "row" + (ok ? "" : " locked");
+      const row = document.createElement("div"); row.className = "row"+(ok?"":" locked");
       const gerekli = c.requires.map(k => ITEMS[k] ? ITEMS[k].icon + " " + ITEMS[k].name : k).join(" / ");
       row.innerHTML = `<span class="label">${c.icon} ${c.name}<br><span style="font-size:9px;color:#556080;">${gerekli}</span></span>`;
-      const b = document.createElement("button"); b.className="crime"; b.textContent = ok ? "SOY" : "🔒";
-      b.disabled = !ok;
-      b.onclick = () => attemptCrime(c.id);
+      const b = document.createElement("button"); b.className="crime"; b.textContent = ok?"SOY":"🔒";
+      b.disabled = !ok; b.onclick = () => attemptCrime(c.id);
       row.appendChild(b); cl.appendChild(row);
     });
 
-    // Oyuncu arama + saldırı
-    const pb = $("playersBox");
-    if (!pb.querySelector("#playersSearch")) {
-      pb.innerHTML = `<input id="playersSearch" placeholder="Oyuncu ara..." />`;
-      $("playersSearch").oninput = renderPlayers;
-    }
     await renderPlayers();
 
-    // Dedektif
-    const db2 = $("detectiveBox");
+    const db2 = $("detectiveBox"); db2.innerHTML = "";
     const saklananlar = allPlayers.filter(p => p.hiding && p.hidingUntil > Date.now());
-    db2.innerHTML = "";
-    if (saklananlar.length === 0) {
-      db2.innerHTML = `<div class="row"><span class="label" style="color:#556080;">Şu an saklanan oyuncu yok</span></div>`;
-    } else {
-      saklananlar.forEach(p => {
-        const row = document.createElement("div"); row.className = "row";
-        row.innerHTML = `<span class="label">🥷 ${p.name} → ${p.hidingIn || "?"}</span>`;
-        const b = document.createElement("button"); b.className = "attack"; b.textContent = "🕵️ BUL (" + DETECTIVE_COST.toLocaleString() + " TL)";
-        b.onclick = () => findHouse(p.id, p.name, p.hidingIn);
-        row.appendChild(b); db2.appendChild(row);
-      });
-    }
+    if (saklananlar.length === 0) db2.innerHTML = `<div class="row"><span class="label" style="color:#556080;">Saklanan yok</span></div>`;
+    else saklananlar.forEach(p => {
+      const row = document.createElement("div"); row.className = "row";
+      row.innerHTML = `<span class="label">🥷 ${p.name} → ${p.hidingIn || "?"}</span>`;
+      const b = document.createElement("button"); b.className="attack"; b.textContent = "🕵️ BUL ("+DETECTIVE_COST.toLocaleString()+")";
+      b.onclick = () => findHouse(p.id, p.name);
+      row.appendChild(b); db2.appendChild(row);
+    });
 
-    // Saklanma paneli
     const hb = $("hideBox"); hb.innerHTML = "";
     if (hiding) {
       const row = document.createElement("div"); row.className = "row";
       row.innerHTML = `<span class="label">🥷 Saklanıyorsun: ${d.hidingIn}</span>`;
-      const b = document.createElement("button"); b.textContent = "ÇIK"; b.onclick = stopHiding;
+      const b = document.createElement("button"); b.textContent="ÇIK"; b.onclick = stopHiding;
       row.appendChild(b); hb.appendChild(row);
     } else {
       const r1 = document.createElement("div"); r1.className = "row";
-      r1.innerHTML = `<span class="label">🌲 Sokakta saklan (10 dk, ücretsiz)</span>`;
-      const b1 = document.createElement("button"); b1.textContent = "SAKLAN"; b1.onclick = () => startHiding(10, "Sokak");
+      r1.innerHTML = `<span class="label">🌲 Sokakta saklan (10 dk)</span>`;
+      const b1 = document.createElement("button"); b1.textContent="SAKLAN"; b1.onclick=()=>startHiding(10,"Sokak");
       r1.appendChild(b1); hb.appendChild(r1);
-
-      (d.assets || []).forEach(a => {
+      (d.assets||[]).forEach(a => {
         if (a.shelter) {
           const r = document.createElement("div"); r.className = "row";
           r.innerHTML = `<span class="label">${a.name} (${a.shelterMin} dk)</span>`;
-          const b = document.createElement("button"); b.className="buy"; b.textContent = "SAKLAN";
+          const b = document.createElement("button"); b.className="buy"; b.textContent="SAKLAN";
           b.onclick = () => startHiding(a.shelterMin, a.name);
           r.appendChild(b); hb.appendChild(r);
         }
       });
     }
 
-    // Mağaza
     const sb = $("shopBox"); sb.innerHTML = "";
     Object.keys(ITEMS).forEach(k => {
       const it = ITEMS[k];
       const row = document.createElement("div"); row.className = "row";
       row.innerHTML = `<span class="label">${it.icon} ${it.name}<br><span style="font-size:9px;color:#556080;">${it.desc}${it.power?' • Güç:'+it.power:''}</span></span><span class="value">${it.price.toLocaleString()}</span>`;
-      const b = document.createElement("button"); b.className="buy"; b.textContent="AL"; b.onclick = () => buyItem(k);
+      const b = document.createElement("button"); b.className="buy"; b.textContent="AL"; b.onclick=()=>buyItem(k);
       row.appendChild(b); sb.appendChild(row);
     });
 
-    // Envanter
     const ib = $("invBox"); ib.innerHTML = "";
     let invBos = true;
     Object.keys(inv).forEach(k => {
@@ -1545,42 +1150,39 @@ async function refreshAll() {
     });
     if (invBos) ib.innerHTML = `<div class="row"><span class="label" style="color:#556080;">Boş</span></div>`;
 
-    // Mülk alım
     const ab = $("assetBuyBox"); ab.innerHTML = "";
     ASSETS.forEach(a => {
       const row = document.createElement("div"); row.className = "row";
-      row.innerHTML = `<span class="label">${a.icon} ${a.name}${a.shelter?' 🥷':''}<br><span style="font-size:9px;color:#556080;">Gelir: +${a.income}/5dk${a.shelter?' • Saklanma:'+a.shelterMin+'dk':''}</span></span><span class="value">${a.price.toLocaleString()}</span>`;
-      const b = document.createElement("button"); b.className="buy"; b.textContent="AL"; b.onclick = () => buyAsset(a.id);
+      row.innerHTML = `<span class="label">${a.icon} ${a.name}${a.shelter?' 🥷':''}<br><span style="font-size:9px;color:#556080;">+${a.income}/5dk${a.shelter?' • '+a.shelterMin+'dk':''}</span></span><span class="value">${a.price.toLocaleString()}</span>`;
+      const b = document.createElement("button"); b.className="buy"; b.textContent="AL"; b.onclick=()=>buyAsset(a.id);
       row.appendChild(b); ab.appendChild(row);
     });
 
-    // Sağlık
     const hhb = $("healthBox"); hhb.innerHTML = "";
     const r1 = document.createElement("div"); r1.className = "row";
     r1.innerHTML = `<span class="label">🏥 Hastane (+30 can)</span><span class="value">500 TL</span>`;
-    const b1 = document.createElement("button"); b1.className="buy"; b1.textContent="GİT"; b1.onclick = heal;
+    const b1 = document.createElement("button"); b1.className="buy"; b1.textContent="GİT"; b1.onclick=heal;
     r1.appendChild(b1); hhb.appendChild(r1);
     const r2 = document.createElement("div"); r2.className = "row";
     r2.innerHTML = `<span class="label">🍔 Yemek (+20 enerji)</span><span class="value">200 TL</span>`;
-    const b2 = document.createElement("button"); b2.className="buy"; b2.textContent="YE"; b2.onclick = eat;
+    const b2 = document.createElement("button"); b2.className="buy"; b2.textContent="YE"; b2.onclick=eat;
     r2.appendChild(b2); hhb.appendChild(r2);
 
-    // Kredi
     const cb = $("creditBox"); cb.innerHTML = "";
-    const l1 = document.createElement("button"); l1.className="work"; l1.textContent="💵 10.000 TL KREDİ ÇEK"; l1.style.width="100%"; l1.onclick = () => takeLoan(10000);
-    const l2 = document.createElement("button"); l2.className="buy"; l2.textContent="💸 10.000 TL BORÇ ÖDE"; l2.style.marginTop="6px"; l2.style.width="100%"; l2.onclick = () => payDebt(10000);
+    const l1 = document.createElement("button"); l1.className="work"; l1.textContent="💵 10K KREDİ ÇEK"; l1.style.width="100%"; l1.onclick=()=>takeLoan(10000);
+    const l2 = document.createElement("button"); l2.className="buy"; l2.textContent="💸 10K BORÇ ÖDE"; l2.style.marginTop="6px"; l2.style.width="100%"; l2.onclick=()=>payDebt(10000);
     cb.appendChild(l1); cb.appendChild(l2);
 
     await refreshRanking();
     await renderNotifications();
     if (isAdmin) loadAdminPanel();
   } catch(e) {
-    alert("refreshAll HATASI:\n" + e.message + "\n\n" + (e.stack || "").substring(0, 600));
-    console.error("refreshAll", e);
+    alert("refreshAll: " + e.message);
+    console.error(e);
   }
 }
 
-/* ============ ADMIN PANEL ============ */
+/* ADMIN PANEL GENİŞLETİLMİŞ */
 $("admClose").onclick = () => { $("adminPanel").style.display = "none"; };
 
 async function loadAdminPanel() {
@@ -1592,29 +1194,95 @@ async function loadAdminPanel() {
       const d = docu.data();
       const row = document.createElement("div"); row.className = "adm-row";
       const isAdm = d.isAdmin ? "👑 " : "";
-      row.innerHTML = `<span style="flex:1;font-size:10px;color:${d.banned?'#e53935':'#888'}">${isAdm}${d.name||"?"} | ${Math.floor(d.cash||0).toLocaleString()} TL</span>`;
+      row.innerHTML = `<span style="flex:1 1 100%;font-size:10px;color:${d.banned?'#e53935':'#888'}">${isAdm}${d.name||"?"} | ${Math.floor(d.cash||0).toLocaleString()} TL | ❤️${d.health||0} ⚡${d.energy||0} 🚨${d.wanted||0}${d.hiding&&d.hidingUntil>Date.now()?' 🥷':''}</span>`;
       const inp = document.createElement("input"); inp.placeholder="TL"; inp.type="number";
-      const bAdd = document.createElement("button"); bAdd.textContent="+";
+
+      // +para
+      const bAdd = document.createElement("button"); bAdd.textContent="+₺";
       bAdd.onclick = async () => {
         const v = parseInt(inp.value); if (!v) return;
-        await updateDoc(doc(db,"users",docu.id), { cash: (d.cash||0) + v });
-        toast(`+${v} TL`);
-        loadAdminPanel();
+        await updateDoc(doc(db,"users",docu.id), { cash: (d.cash||0)+v });
+        toast(`+${v} TL → ${d.name}`); loadAdminPanel();
       };
-      const bSub = document.createElement("button"); bSub.textContent="−";
+      // -para
+      const bSub = document.createElement("button"); bSub.textContent="−₺";
       bSub.onclick = async () => {
         const v = parseInt(inp.value); if (!v) return;
-        await updateDoc(doc(db,"users",docu.id), { cash: Math.max(0,(d.cash||0) - v) });
-        toast(`-${v} TL`);
-        loadAdminPanel();
+        await updateDoc(doc(db,"users",docu.id), { cash: Math.max(0,(d.cash||0)-v) });
+        toast(`-${v} TL → ${d.name}`); loadAdminPanel();
       };
+      // +can
+      const bHp = document.createElement("button"); bHp.textContent="❤️";
+      bHp.title="Can 50";
+      bHp.onclick = async () => {
+        await updateDoc(doc(db,"users",docu.id), { health: 50, maxHealth: 50 });
+        toast(`Can 50 → ${d.name}`); loadAdminPanel();
+      };
+      // +enerji
+      const bEn = document.createElement("button"); bEn.textContent="⚡";
+      bEn.title="Enerji 100";
+      bEn.onclick = async () => {
+        await updateDoc(doc(db,"users",docu.id), { energy: 100 });
+        toast(`Enerji 100 → ${d.name}`); loadAdminPanel();
+      };
+      // hapisten çıkar
+      const bUJ = document.createElement("button"); bUJ.textContent="🔓";
+      bUJ.title="Hapisten çıkar";
+      bUJ.onclick = async () => {
+        await updateDoc(doc(db,"users",docu.id), { jailUntil: 0 });
+        toast(`Hapis bitti → ${d.name}`); loadAdminPanel();
+      };
+      // aranma sıfırla
+      const bW = document.createElement("button"); bW.textContent="🚨";
+      bW.title="Aranma sıfırla";
+      bW.onclick = async () => {
+        await updateDoc(doc(db,"users",docu.id), { wanted: 0 });
+        toast(`Aranma 0 → ${d.name}`); loadAdminPanel();
+      };
+      // borç sıfırla
+      const bD = document.createElement("button"); bD.textContent="🏦";
+      bD.title="Borç sıfırla";
+      bD.onclick = async () => {
+        await updateDoc(doc(db,"users",docu.id), { debt: 0 });
+        toast(`Borç 0 → ${d.name}`); loadAdminPanel();
+      };
+      // envanter temizle
+      const bI = document.createElement("button"); bI.textContent="🎒";
+      bI.title="Envanter temizle";
+      bI.onclick = async () => {
+        if (!confirm(`${d.name} envanterini sil?`)) return;
+        await updateDoc(doc(db,"users",docu.id), { inventory: {} });
+        toast(`Envanter silindi → ${d.name}`); loadAdminPanel();
+      };
+      // mülkleri sil
+      const bAs = document.createElement("button"); bAs.textContent="🏪";
+      bAs.title="Mülkleri sil";
+      bAs.onclick = async () => {
+        if (!confirm(`${d.name} mülklerini sil?`)) return;
+        await updateDoc(doc(db,"users",docu.id), { assets: [] });
+        toast(`Mülkler silindi → ${d.name}`); loadAdminPanel();
+      };
+      // hapis at (30 dk)
+      const bJail = document.createElement("button"); bJail.textContent="🔒";
+      bJail.title="30 dk hapis";
+      bJail.onclick = async () => {
+        await updateDoc(doc(db,"users",docu.id), { jailUntil: Date.now() + 30*60*1000 });
+        toast(`30 dk hapis → ${d.name}`); loadAdminPanel();
+      };
+      // ban
       const bBan = document.createElement("button");
       bBan.textContent = d.banned ? "UNBAN" : "BAN";
       bBan.onclick = async () => {
         await updateDoc(doc(db,"users",docu.id), { banned: !d.banned });
-        loadAdminPanel();
+        toast(`${d.banned?"Unban":"Ban"}: ${d.name}`); loadAdminPanel();
       };
-      row.appendChild(inp); row.appendChild(bAdd); row.appendChild(bSub); row.appendChild(bBan);
+
+      row.appendChild(inp);
+      row.appendChild(bAdd); row.appendChild(bSub);
+      row.appendChild(bHp); row.appendChild(bEn);
+      row.appendChild(bUJ); row.appendChild(bW); row.appendChild(bD);
+      row.appendChild(bI); row.appendChild(bAs); row.appendChild(bJail);
+      row.appendChild(bBan);
       box.appendChild(row);
     });
   } catch(e) { alert("Admin: " + e.message); }
@@ -1622,12 +1290,12 @@ async function loadAdminPanel() {
 
 $("admGlobalAdd").onclick = async () => {
   const s = await getDocs(collection(db,"users"));
-  for (const d of s.docs) await updateDoc(d.ref, { cash: (d.data().cash||0) + 1000 });
+  for (const d of s.docs) await updateDoc(d.ref, { cash: (d.data().cash||0)+1000 });
   toast("Global +1000"); loadAdminPanel();
 };
 $("admGlobalSub").onclick = async () => {
   const s = await getDocs(collection(db,"users"));
-  for (const d of s.docs) await updateDoc(d.ref, { cash: Math.max(0,(d.data().cash||0) - 1000) });
+  for (const d of s.docs) await updateDoc(d.ref, { cash: Math.max(0,(d.data().cash||0)-1000) });
   toast("Global -1000"); loadAdminPanel();
 };
 $("admResetMarket").onclick = async () => {
@@ -1636,18 +1304,14 @@ $("admResetMarket").onclick = async () => {
   toast("Market sıfırlandı"); refreshAll();
 };
 $("admRefresh").onclick = () => loadAdminPanel();
-$("admTestTg").onclick = () => tgLog(`🧪 Test`);
+$("admTestTg").onclick = () => tgLog(`🧪 Test - ${new Date().toLocaleString("tr-TR")}`);
 
-/* ============ OTOMATİK TICK ============ */
+/* TICK */
 setInterval(async () => {
   if (!uid()) return;
-  try {
-    await tickEffects();
-    await refreshAll();
-  } catch(e){ console.warn("tick", e); }
+  try { await tickEffects(); await refreshAll(); } catch(e){}
 }, 60000);
 
-// Sayfa açılınca ilk tick
 setTimeout(() => { if (uid()) { tickEffects(); refreshAll(); } }, 3000);
 </script>
 </body>
