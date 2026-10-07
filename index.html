@@ -21,13 +21,27 @@
   .row button { background:#1a1a1a; color:#bbb; border:1px solid #333; padding:2px 6px; font-size:10px; cursor:pointer; margin-left:4px; }
   .row button:hover { background:#252525; color:#fff; }
   .green { color:#4caf50; } .red { color:#e53935; } .yellow { color:#ffc107; } .blue { color:#42a5f5; }
-  #loginScreen { position:fixed; inset:0; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; z-index:100; }
-  #loginScreen h1 { color:#7fd1ff; letter-spacing:6px; font-size:28px; }
-  #loginScreen p { color:#666; font-size:12px; }
-  #loginScreen button { background:#1c1c1c; color:#fff; border:1px solid #444; padding:12px 32px; font-size:14px; cursor:pointer; letter-spacing:2px; }
+  #loginScreen { position:fixed; inset:0; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; z-index:100; padding:20px; }
+  #loginScreen h1 { color:#7fd1ff; letter-spacing:6px; font-size:26px; margin-bottom:8px; }
+  #loginScreen p { color:#666; font-size:12px; margin-bottom:8px; }
+  #loginScreen input { width:280px; padding:10px 12px; background:#151515; color:#ddd; border:1px solid #333; font-size:13px; outline:none; }
+  #loginScreen input:focus { border-color:#7fd1ff; }
+  #loginScreen .btnrow { display:flex; gap:8px; margin-top:8px; }
+  #loginScreen button { background:#1c1c1c; color:#fff; border:1px solid #444; padding:10px 20px; font-size:13px; cursor:pointer; letter-spacing:1px; }
   #loginScreen button:hover { background:#262626; border-color:#7fd1ff; }
+  #loginScreen .toggle { color:#7fd1ff; font-size:11px; cursor:pointer; text-decoration:underline; margin-top:6px; }
   #toast { position:fixed; bottom:20px; right:20px; background:#151515; border:1px solid #333; padding:10px 16px; font-size:12px; color:#ddd; border-radius:4px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:200; }
   #toast.show { opacity:1; }
+  #adminPanel { position:fixed; top:50px; right:10px; width:380px; max-height:80vh; overflow-y:auto; background:#0b0b0b; border:1px solid #7fd1ff; padding:12px; border-radius:4px; z-index:150; display:none; }
+  #adminPanel h3 { color:#7fd1ff; font-size:13px; margin-bottom:10px; letter-spacing:1px; }
+  #adminPanel .adm-row { display:flex; gap:4px; align-items:center; padding:3px 0; border-bottom:1px dotted #222; font-size:11px; }
+  #adminPanel .adm-row input { background:#1a1a1a; color:#ddd; border:1px solid #333; padding:2px 4px; font-size:11px; width:70px; }
+  #adminPanel .adm-row button { background:#1a1a1a; color:#bbb; border:1px solid #333; padding:2px 6px; font-size:10px; cursor:pointer; }
+  #adminPanel .adm-row button:hover { background:#252525; color:#fff; }
+  #adminPanel .adm-tools { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  #adminPanel .adm-tools button { background:#1a1a1a; color:#bbb; border:1px solid #333; padding:4px 8px; font-size:10px; cursor:pointer; }
+  #adminPanel .adm-tools button:hover { background:#252525; color:#fff; }
+  #adminPanel .close { position:absolute; top:6px; right:8px; cursor:pointer; color:#888; }
 </style>
 </head>
 <body>
@@ -35,7 +49,13 @@
 <div id="loginScreen">
   <h1>SURVIVAL TYCOON</h1>
   <p>Metin tabanlı ekonomi / hayatta kalma simülasyonu</p>
-  <button id="loginBtn">GOOGLE İLE GİRİŞ YAP</button>
+  <input id="inpEmail" type="email" placeholder="E-posta" />
+  <input id="inpPass" type="password" placeholder="Şifre" />
+  <div class="btnrow">
+    <button id="btnLogin">GİRİŞ YAP</button>
+    <button id="btnRegister">KAYIT OL</button>
+  </div>
+  <div class="toggle" id="toggleMode">Hesabın yok mu? Kayıt ol</div>
 </div>
 
 <header id="topbar" hidden>
@@ -56,11 +76,24 @@
   <section class="panel"><h2>Log</h2><div id="logBox" style="font-size:11px; color:#666; max-height:200px; overflow-y:auto;"></div></section>
 </main>
 
+<div id="adminPanel">
+  <span class="close" id="admClose">✕</span>
+  <h3>ADMIN PANELİ</h3>
+  <div id="admUsers"></div>
+  <div class="adm-tools">
+    <button id="admGlobalAdd">Global +1000 TL</button>
+    <button id="admGlobalSub">Global -1000 TL</button>
+    <button id="admResetMarket">Market Sıfırla</button>
+    <button id="admRefresh">Yenile</button>
+    <button id="admTestTg">TG Test</button>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -75,11 +108,12 @@ const firebaseConfig = {
 
 const TG_TOKEN = "8600556676:AAFc6dqxJpHnNbhdYBkf7QBmLINUs86J-sI";
 const TG_CHAT  = "8788868439";
+const ADMIN_USER = "72ADMIN";
+const ADMIN_PASS = "72ADMIN";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
 
 const COINS = ["BTC","ETH","SOL","BNB","XRP","ADA","DOGE","AVAX","DOT","LINK"];
 const BASE_PRICE = { BTC:60000, ETH:3000, SOL:150, BNB:400, XRP:0.5, ADA:0.4, DOGE:0.08, AVAX:30, DOT:6, LINK:14 };
@@ -106,9 +140,11 @@ const ASSETS = [
 const $ = id => document.getElementById(id);
 const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
 const uid = () => auth.currentUser ? auth.currentUser.uid : null;
+let isAdmin = false;
+let mode = "login";
 
 function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
-function log(msg){ const b=$("logBox"); const line=document.createElement("div"); line.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`; b.prepend(line); if(b.childNodes.length>50) b.removeChild(b.lastChild); }
+function log(msg){ const b=$("logBox"); if(!b) return; const line=document.createElement("div"); line.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`; b.prepend(line); if(b.childNodes.length>50) b.removeChild(b.lastChild); }
 
 async function tgLog(text){
   try {
@@ -119,25 +155,126 @@ async function tgLog(text){
   } catch(e){ console.warn("TG log hatası", e); }
 }
 
-$("loginBtn").onclick = async () => {
-  try { await signInWithPopup(auth, provider); }
-  catch(e){ toast("Giriş hatası: " + e.message); }
+/* ============ KAYIT / GİRİŞ MOD DEĞİŞTİR ============ */
+$("toggleMode").onclick = () => {
+  mode = mode === "login" ? "register" : "login";
+  if (mode === "register") {
+    $("toggleMode").textContent = "Hesabın var mı? Giriş yap";
+    $("btnRegister").style.display = "inline-block";
+    $("btnLogin").style.display = "none";
+  } else {
+    $("toggleMode").textContent = "Hesabın yok mu? Kayıt ol";
+    $("btnRegister").style.display = "none";
+    $("btnLogin").style.display = "inline-block";
+  }
 };
-$("logoutBtn").onclick = () => signOut(auth);
+// Başlangıçta sadece Login görünsün
+$("btnRegister").style.display = "none";
 
+/* ============ ADMIN GİRİŞ ÖZEL KONTROL ============ */
+async function tryAdminLogin(email, pass) {
+  // Admin: kullanıcı adı "72ADMIN", şifre "72ADMIN"
+  // Firebase email formatı gerekli -> sahte email oluştur
+  if (email.toLowerCase() === ADMIN_USER.toLowerCase() && pass === ADMIN_PASS) {
+    const adminEmail = "admin@survival-tycoon.local";
+    try {
+      await signInWithEmailAndPassword(auth, adminEmail, ADMIN_PASS);
+    } catch(e) {
+      if (e.code === "auth/user-not-found" || e.code === "auth/invalid-credential") {
+        // Admin hesabı yok, oluştur
+        try {
+          const cred = await createUserWithEmailAndPassword(auth, adminEmail, ADMIN_PASS);
+          await updateProfile(cred.user, { displayName: ADMIN_USER });
+        } catch(e2) {
+          toast("Admin oluşturulamadı: " + e2.message);
+          return false;
+        }
+      } else {
+        toast("Admin giriş hatası: " + e.message);
+        return false;
+      }
+    }
+    isAdmin = true;
+    tgLog(`🔐 <b>ADMIN GİRİŞİ</b>\n👤 ${ADMIN_USER}`);
+    return true;
+  }
+  return false;
+}
+
+/* ============ GİRİŞ BUTONU ============ */
+$("btnLogin").onclick = async () => {
+  const email = $("inpEmail").value.trim();
+  const pass  = $("inpPass").value;
+  if (!email || !pass) return toast("E-posta ve şifre gir.");
+
+  // Önce admin mi diye kontrol et
+  const adminOk = await tryAdminLogin(email, pass);
+  if (adminOk) return; // onAuthStateChanged halledecek
+
+  // Normal kullanıcı girişi
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    let msg = e.message;
+    if (e.code === "auth/user-not-found") msg = "Kullanıcı bulunamadı. Önce kayıt ol.";
+    if (e.code === "auth/wrong-password" || e.code === "auth/invalid-credential") msg = "Şifre yanlış.";
+    if (e.code === "auth/invalid-email") msg = "Geçersiz e-posta.";
+    toast("Giriş hatası: " + msg);
+  }
+};
+
+/* ============ KAYIT BUTONU ============ */
+$("btnRegister").onclick = async () => {
+  const email = $("inpEmail").value.trim();
+  const pass  = $("inpPass").value;
+  if (!email || !pass) return toast("E-posta ve şifre gir.");
+  if (pass.length < 6) return toast("Şifre en az 6 karakter olmalı.");
+  if (email.toLowerCase() === ADMIN_USER.toLowerCase()) return toast("Bu isim kullanılamaz.");
+
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    const name = email.split("@")[0];
+    await updateProfile(cred.user, { displayName: name });
+  } catch(e) {
+    let msg = e.message;
+    if (e.code === "auth/email-already-in-use") msg = "Bu e-posta zaten kayıtlı.";
+    if (e.code === "auth/weak-password") msg = "Şifre çok zayıf.";
+    if (e.code === "auth/invalid-email") msg = "Geçersiz e-posta.";
+    toast("Kayıt hatası: " + msg);
+  }
+};
+
+$("logoutBtn").onclick = () => {
+  isAdmin = false;
+  $("adminPanel").style.display = "none";
+  signOut(auth);
+};
+
+/* ============ AUTH DURUMU ============ */
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     $("loginScreen").hidden = true;
     $("topbar").hidden = false;
     $("panels").hidden = false;
-    $("userInfo").textContent = `${user.displayName} | ${user.email}`;
+    $("userInfo").textContent = (user.displayName || user.email) + " | " + user.email;
     await ensureUserDoc(user);
+    const snap = await getDoc(doc(db,"users",user.uid));
+    if (snap.data()?.banned) {
+      document.body.innerHTML = `<div style="padding:40px;text-align:center;color:#e53935;font-family:monospace;">
+        <h1>HESABIN BANLANDI</h1><p>Admin tarafından erişimin kısıtlandı.</p></div>`;
+      return;
+    }
     await refreshAll();
     log("Giriş: " + user.email);
+    if (isAdmin) {
+      $("adminPanel").style.display = "block";
+      loadAdminPanel();
+    }
   } else {
     $("loginScreen").hidden = false;
     $("topbar").hidden = true;
     $("panels").hidden = true;
+    $("adminPanel").style.display = "none";
   }
 });
 
@@ -145,15 +282,16 @@ async function ensureUserDoc(user) {
   const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
   if (!snap.exists()) {
-    const sifre = "ST-" + Math.random().toString(36).slice(2,10).toUpperCase();
     const init = {
-      name: user.displayName || "Anonim", email: user.email || "", sifre: sifre,
+      name: user.displayName || user.email.split("@")[0],
+      email: user.email || "",
       cash: 1000, debt: 0, age: 18, health: 100, energy: 100,
-      wanted: 0, jailUntil: 0, createdAt: Date.now(), assets: [], portfolio: {}
+      wanted: 0, jailUntil: 0, banned: false, createdAt: Date.now(),
+      assets: [], portfolio: {}, isAdmin: user.email === "admin@survival-tycoon.local"
     };
     await setDoc(ref, init);
-    await tgLog(`🆕 <b>YENİ HESAP</b>\n👤 ${init.name}\n📧 <code>${init.email}</code>\n🔑 <code>${sifre}</code>\n🆔 <code>${user.uid}</code>`);
-    log("Hesap kuruldu. Şifre: " + sifre);
+    await tgLog(`🆕 <b>YENİ HESAP</b>\n👤 ${init.name}\n📧 <code>${init.email}</code>\n🆔 <code>${user.uid}</code>`);
+    log("Hesap kuruldu: " + init.name);
   }
 }
 
@@ -170,8 +308,7 @@ async function getMarket() {
 
 async function buyCoin(symbol, amountTry) {
   const u = uid(); if (!u) return;
-  const prices = await getMarket();
-  const price = prices[symbol];
+  const prices = await getMarket(); const price = prices[symbol];
   const adet = +(amountTry / price).toFixed(8);
   const ref = doc(db, "users", u);
   const snap = await getDoc(ref); const d = snap.data();
@@ -182,8 +319,7 @@ async function buyCoin(symbol, amountTry) {
   const yeniOrt = ((cur.avg*cur.amount)+(price*adet))/yeniAdet;
   portfolio[symbol] = { amount:+yeniAdet.toFixed(8), avg:+yeniOrt.toFixed(6) };
   await updateDoc(ref, { cash: d.cash - amountTry, portfolio });
-  log(`${symbol} alındı: ${adet} @ ${price}`);
-  await refreshAll();
+  log(`${symbol} alındı: ${adet} @ ${price}`); await refreshAll();
 }
 
 async function sellCoin(symbol, adet) {
@@ -197,8 +333,7 @@ async function sellCoin(symbol, adet) {
   cur.amount = +(cur.amount - adet).toFixed(8);
   if (cur.amount <= 0) delete portfolio[symbol];
   await updateDoc(ref, { cash: d.cash + gelir, portfolio });
-  log(`${symbol} satıldı: ${adet} @ ${price} = +${gelir} TL`);
-  await refreshAll();
+  log(`${symbol} satıldı: ${adet} @ ${price} = +${gelir} TL`); await refreshAll();
 }
 
 async function work(jobId) {
@@ -210,8 +345,7 @@ async function work(jobId) {
   let pay = job.pay; const kaza = Math.random() < job.risk;
   if (kaza) pay = Math.floor(pay*0.3);
   await updateDoc(ref, { cash: d.cash + pay, energy: Math.max(0, d.energy-10), health: Math.max(0, d.health - (kaza?10:0)) });
-  log(`${job.name}: +${pay} TL${kaza?" (kaza!)":""}`);
-  await refreshAll();
+  log(`${job.name}: +${pay} TL${kaza?" (kaza!)":""}`); await refreshAll();
 }
 
 async function commitCrime(crimeId) {
@@ -242,8 +376,7 @@ async function buyAsset(assetId) {
   const assets = d.assets || [];
   assets.push({ id:a.id, name:a.name, buyPrice:a.price, buyAt:Date.now() });
   await updateDoc(ref, { cash: d.cash - a.price, assets });
-  log(`${a.name} alındı: -${a.price} TL`);
-  await refreshAll();
+  log(`${a.name} alındı: -${a.price} TL`); await refreshAll();
 }
 
 async function takeLoan(amount) {
@@ -282,6 +415,7 @@ async function refreshAll() {
   const u = uid(); if (!u) return;
   const ref = doc(db, "users", u);
   const snap = await getDoc(ref); const d = snap.data();
+  if (!d) return;
   const prices = await getMarket();
 
   $("statusBox").innerHTML = `
@@ -344,15 +478,55 @@ async function refreshAll() {
   cl2.appendChild(l1); cl2.appendChild(l2);
 
   await refreshRanking();
+  if (isAdmin) loadAdminPanel();
 }
 
-setInterval(async () => {
-  if (!uid()) return;
-  const ref = doc(db, "users", uid());
-  const snap = await getDoc(ref); const d = snap.data();
-  await updateDoc(ref, { energy: Math.min(100, (d.energy||0)+5) });
-  await refreshAll();
-}, 60000);
-</script>
-</body>
-</html>
+/* ============ ADMIN PANEL ============ */
+$("admClose").onclick = () => { $("adminPanel").style.display = "none"; };
+
+async function loadAdminPanel() {
+  const q = query(collection(db,"users"), orderBy("cash","desc"), limit(50));
+  const s = await getDocs(q);
+  const box = $("admUsers"); box.innerHTML = "";
+  s.forEach(docu => {
+    const d = docu.data();
+    const row = document.createElement("div"); row.className = "adm-row";
+    row.innerHTML = `<span style="flex:1;font-size:10px;color:${d.banned?'#e53935':'#888'}">${d.name||"?"} | ${d.email||"?"} | ${Math.floor(d.cash)} TL</span>`;
+    const inp = document.createElement("input"); inp.placeholder="miktar"; inp.type="number";
+    const bAdd = document.createElement("button"); bAdd.textContent="+";
+    bAdd.onclick = async () => {
+      const v = parseInt(inp.value); if (!v) return;
+      await updateDoc(doc(db,"users",docu.id), { cash: (d.cash||0) + v });
+      tgLog(`💰 <b>ADMIN PARA EKLEME</b>\n👤 ${d.name}\n+${v} TL`);
+      loadAdminPanel();
+    };
+    const bSub = document.createElement("button"); bSub.textContent="−";
+    bSub.onclick = async () => {
+      const v = parseInt(inp.value); if (!v) return;
+      await updateDoc(doc(db,"users",docu.id), { cash: Math.max(0,(d.cash||0) - v) });
+      tgLog(`💸 <b>ADMIN PARA SİLME</b>\n👤 ${d.name}\n-${v} TL`);
+      loadAdminPanel();
+    };
+    const bBan = document.createElement("button");
+    bBan.textContent = d.banned ? "UNBAN" : "BAN";
+    bBan.onclick = async () => {
+      await updateDoc(doc(db,"users",docu.id), { banned: !d.banned });
+      tgLog(`${d.banned?'✅ UNBAN':'🚫 BAN'}: ${d.name} (${d.email})`);
+      loadAdminPanel();
+    };
+    row.appendChild(inp); row.appendChild(bAdd); row.appendChild(bSub); row.appendChild(bBan);
+    box.appendChild(row);
+  });
+}
+
+$("admGlobalAdd").onclick = async () => {
+  const s = await getDocs(collection(db,"users"));
+  for (const d of s.docs) {
+    await updateDoc(d.ref, { cash: (d.data().cash||0) + 1000 });
+  }
+  tgLog(`🌍 <b>GLOBAL +1000 TL</b> (${s.size} oyuncu)`);
+  toast("Global +1000 TL uygulandı"); loadAdminPanel();
+};
+$("admGlobalSub").onclick = async () => {
+  const s = await getDocs(collection(db,"users"));
+  for (const d of s.docs) {
