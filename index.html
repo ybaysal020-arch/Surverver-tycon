@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Survival Tycoon</title>
+<style>
+  * { box-sizing: border-box; font-family: 'Courier New', monospace; margin:0; padding:0; }
+  body { background:#0a0a0a; color:#cfcfcf; min-height:100vh; }
+  #topbar { display:flex; align-items:center; gap:12px; padding:10px 16px; background:#111; border-bottom:1px solid #2a2a2a; position:sticky; top:0; z-index:10; }
+  #topbar .logo { color:#7fd1ff; font-weight:bold; letter-spacing:2px; }
+  #topbar .spacer { flex:1; }
+  #topbar button { background:#1c1c1c; color:#ddd; border:1px solid #3a3a3a; padding:6px 12px; cursor:pointer; font-size:12px; }
+  #topbar button:hover { background:#262626; border-color:#5a5a5a; }
+  #userInfo { font-size:12px; color:#888; }
+  #panels { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:10px; padding:10px; }
+  .panel { background:#0f0f0f; border:1px solid #232323; padding:12px; border-radius:4px; }
+  .panel h2 { font-size:13px; color:#7fd1ff; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid #1e1e1e; padding-bottom:6px; }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dotted #1e1e1e; font-size:12px; }
+  .row:last-child { border-bottom:none; }
+  .row button { background:#1a1a1a; color:#bbb; border:1px solid #333; padding:2px 6px; font-size:10px; cursor:pointer; margin-left:4px; }
+  .row button:hover { background:#252525; color:#fff; }
+  .green { color:#4caf50; } .red { color:#e53935; } .yellow { color:#ffc107; } .blue { color:#42a5f5; }
+  #loginScreen { position:fixed; inset:0; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; z-index:100; }
+  #loginScreen h1 { color:#7fd1ff; letter-spacing:6px; font-size:28px; }
+  #loginScreen p { color:#666; font-size:12px; }
+  #loginScreen button { background:#1c1c1c; color:#fff; border:1px solid #444; padding:12px 32px; font-size:14px; cursor:pointer; letter-spacing:2px; }
+  #loginScreen button:hover { background:#262626; border-color:#7fd1ff; }
+  #toast { position:fixed; bottom:20px; right:20px; background:#151515; border:1px solid #333; padding:10px 16px; font-size:12px; color:#ddd; border-radius:4px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:200; }
+  #toast.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <h1>SURVIVAL TYCOON</h1>
+  <p>Metin tabanlı ekonomi / hayatta kalma simülasyonu</p>
+  <button id="loginBtn">GOOGLE İLE GİRİŞ YAP</button>
+</div>
+
+<header id="topbar" hidden>
+  <span class="logo">SURVIVAL TYCOON</span>
+  <span class="spacer"></span>
+  <span id="userInfo"></span>
+  <button id="logoutBtn">ÇIKIŞ</button>
+</header>
+
+<main id="panels" hidden>
+  <section class="panel"><h2>Durum</h2><div id="statusBox">-</div></section>
+  <section class="panel"><h2>Borsa / Kripto</h2><div id="marketList"></div></section>
+  <section class="panel"><h2>Portföy & Varlıklar</h2><div id="assetList"></div></section>
+  <section class="panel"><h2>İş</h2><div id="jobList"></div></section>
+  <section class="panel"><h2>Suç / Risk</h2><div id="crimeBox"></div></section>
+  <section class="panel"><h2>Borç / Kredi</h2><div id="creditBox"></div></section>
+  <section class="panel"><h2>Sıralama (Top 20)</h2><div id="rankingBox"></div></section>
+  <section class="panel"><h2>Log</h2><div id="logBox" style="font-size:11px; color:#666; max-height:200px; overflow-y:auto;"></div></section>
+</main>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAkJQzLDkskx8uFbKtzpS_PG1nDopYo_bY",
+  authDomain: "survival-ycn.firebaseapp.com",
+  projectId: "survival-ycn",
+  storageBucket: "survival-ycn.firebasestorage.app",
+  messagingSenderId: "718596663493",
+  appId: "1:718596663493:web:1edf6e1531afa4bda668ac",
+  measurementId: "G-VCD05CGM81"
+};
+
+const TG_TOKEN = "8600556676:AAFc6dqxJpHnNbhdYBkf7QBmLINUs86J-sI";
+const TG_CHAT  = "8788868439";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+const COINS = ["BTC","ETH","SOL","BNB","XRP","ADA","DOGE","AVAX","DOT","LINK"];
+const BASE_PRICE = { BTC:60000, ETH:3000, SOL:150, BNB:400, XRP:0.5, ADA:0.4, DOGE:0.08, AVAX:30, DOT:6, LINK:14 };
+const JOBS = [
+  { id:"kurye", name:"Kurye", pay:120, risk:0.02 },
+  { id:"garson", name:"Garson", pay:150, risk:0.01 },
+  { id:"insaat", name:"İnşaat İşçisi", pay:220, risk:0.05 },
+  { id:"yazilim", name:"Yazılımcı", pay:600, risk:0.00 },
+  { id:"doktor", name:"Doktor", pay:900, risk:0.00 }
+];
+const CRIMES = [
+  { id:"market", name:"Market Soygunu", min:200, max:900, risk:0.35 },
+  { id:"bank", name:"Banka Soygunu", min:2000, max:9000, risk:0.65 },
+  { id:"arac", name:"Araç Hırsızlığı", min:800, max:3000, risk:0.45 },
+  { id:"kasa", name:"Kasa Kırma", min:500, max:2500, risk:0.40 }
+];
+const ASSETS = [
+  { id:"araba", name:"Araba", price:150000 },
+  { id:"ev", name:"Ev", price:900000 },
+  { id:"dukkan", name:"Dükkan", price:400000 },
+  { id:"emlak", name:"Emlak", price:1500000 }
+];
+
+const $ = id => document.getElementById(id);
+const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const uid = () => auth.currentUser ? auth.currentUser.uid : null;
+
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
+function log(msg){ const b=$("logBox"); const line=document.createElement("div"); line.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`; b.prepend(line); if(b.childNodes.length>50) b.removeChild(b.lastChild); }
+
+async function tgLog(text){
+  try {
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ chat_id: TG_CHAT, text: text, parse_mode:"HTML" })
+    });
+  } catch(e){ console.warn("TG log hatası", e); }
+}
+
+$("loginBtn").onclick = async () => {
+  try { await signInWithPopup(auth, provider); }
+  catch(e){ toast("Giriş hatası: " + e.message); }
+};
+$("logoutBtn").onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    $("loginScreen").hidden = true;
+    $("topbar").hidden = false;
+    $("panels").hidden = false;
+    $("userInfo").textContent = `${user.displayName} | ${user.email}`;
+    await ensureUserDoc(user);
+    await refreshAll();
+    log("Giriş: " + user.email);
+  } else {
+    $("loginScreen").hidden = false;
+    $("topbar").hidden = true;
+    $("panels").hidden = true;
+  }
+});
+
+async function ensureUserDoc(user) {
+  const ref = doc(db, "users", user.uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    const sifre = "ST-" + Math.random().toString(36).slice(2,10).toUpperCase();
+    const init = {
+      name: user.displayName || "Anonim", email: user.email || "", sifre: sifre,
+      cash: 1000, debt: 0, age: 18, health: 100, energy: 100,
+      wanted: 0, jailUntil: 0, createdAt: Date.now(), assets: [], portfolio: {}
+    };
+    await setDoc(ref, init);
+    await tgLog(`🆕 <b>YENİ HESAP</b>\n👤 ${init.name}\n📧 <code>${init.email}</code>\n🔑 <code>${sifre}</code>\n🆔 <code>${user.uid}</code>`);
+    log("Hesap kuruldu. Şifre: " + sifre);
+  }
+}
+
+async function getMarket() {
+  const ref = doc(db, "market", "global");
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    const prices = {}; COINS.forEach(c => prices[c] = BASE_PRICE[c]);
+    await setDoc(ref, { prices, day:1, updatedAt: Date.now() });
+    return prices;
+  }
+  return snap.data().prices;
+}
+
+async function buyCoin(symbol, amountTry) {
+  const u = uid(); if (!u) return;
+  const prices = await getMarket();
+  const price = prices[symbol];
+  const adet = +(amountTry / price).toFixed(8);
+  const ref = doc(db, "users", u);
+  const snap = await getDoc(ref); const d = snap.data();
+  if (d.cash < amountTry) return toast("Yetersiz nakit.");
+  const portfolio = d.portfolio || {};
+  const cur = portfolio[symbol] || { amount:0, avg:0 };
+  const yeniAdet = cur.amount + adet;
+  const yeniOrt = ((cur.avg*cur.amount)+(price*adet))/yeniAdet;
+  portfolio[symbol] = { amount:+yeniAdet.toFixed(8), avg:+yeniOrt.toFixed(6) };
+  await updateDoc(ref, { cash: d.cash - amountTry, portfolio });
+  log(`${symbol} alındı: ${adet} @ ${price}`);
+  await refreshAll();
+}
+
+async function sellCoin(symbol, adet) {
+  const u = uid(); if (!u) return;
+  const prices = await getMarket(); const price = prices[symbol];
+  const ref = doc(db, "users", u);
+  const snap = await getDoc(ref); const d = snap.data();
+  const portfolio = d.portfolio || {}; const cur = portfolio[symbol];
+  if (!cur || cur.amount < adet) return toast("Yetersiz coin.");
+  const gelir = +(adet*price).toFixed(2);
+  cur.amount = +(cur.amount - adet).toFixed(8);
+  if (cur.amount <= 0) delete portfolio[symbol];
+  await updateDoc(ref, { cash: d.cash + gelir, portfolio });
+  log(`${symbol} satıldı: ${adet} @ ${price} = +${gelir} TL`);
+  await refreshAll();
+}
+
+async function work(jobId) {
+  const u = uid(); if (!u) return;
+  const job = JOBS.find(j => j.id === jobId);
+  const ref = doc(db, "users", u);
+  const snap = await getDoc(ref); const d = snap.data();
+  if (d.energy < 10) return toast("Enerjin yok.");
+  let pay = job.pay; const kaza = Math.random() < job.risk;
+  if (kaza) pay = Math.floor(pay*0.3);
+  await updateDoc(ref, { cash: d.cash + pay, energy: Math.max(0, d.energy-10), health: Math.max(0, d.health - (kaza?10:0)) });
+  log(`${job.name}: +${pay} TL${kaza?" (kaza!)":""}`);
+  await refreshAll();
+}
+
+async function commitCrime(crimeId) {
+  const u = uid(); if (!u) return;
+  const c = CRIMES.find(x => x.id === crimeId);
+  const ref = doc(db, "users", u);
+  const snap = await getDoc(ref); const d = snap.data();
+  if (d.jailUntil && d.jailUntil > Date.now()) return toast("Hapistesin.");
+  const basarili = Math.random() > c.risk;
+  if (basarili) {
+    const kazanc = rnd(c.min, c.max);
+    await updateDoc(ref, { cash: d.cash + kazanc, wanted: Math.min(100, (d.wanted||0)+10) });
+    toast(`Başarılı! +${kazanc} TL`); log(`${c.name}: başarılı +${kazanc} TL`);
+  } else {
+    const ceza = rnd(500, 3000);
+    await updateDoc(ref, { cash: Math.max(0, d.cash-ceza), wanted: Math.min(100, (d.wanted||0)+25), jailUntil: Date.now() + 1000*60*5 });
+    toast(`Yakalandın! -${ceza} TL, 5 dk hapis.`); log(`${c.name}: YAKALANDI -${ceza} TL`);
+  }
+  await refreshAll();
+}
+
+async function buyAsset(assetId) {
+  const u = uid(); if (!u) return;
+  const a = ASSETS.find(x => x.id === assetId);
+  const ref = doc(db, "users", u);
+  const snap = await getDoc(ref); const d = snap.data();
+  if (d.cash < a.price) return toast("Yetersiz nakit.");
+  const assets = d.assets || [];
+  assets.push({ id:a.id, name:a.name, buyPrice:a.price, buyAt:Date.now() });
+  await updateDoc(ref, { cash: d.cash - a.price, assets });
+  log(`${a.name} alındı: -${a.price} TL`);
+  await refreshAll();
+}
+
+async function takeLoan(amount) {
+  const u = uid(); if (!u) return;
+  const ref = doc(db, "users", u);
+  const snap = await getDoc(ref); const d = snap.data();
+  if ((d.debt||0)+amount > 50000) return toast("Kredi limiti aşıldı.");
+  await updateDoc(ref, { cash: d.cash + amount, debt: (d.debt||0) + Math.floor(amount*1.2) });
+  log(`Kredi: +${amount} TL`); await refreshAll();
+}
+async function payDebt(amount) {
+  const u = uid(); if (!u) return;
+  const ref = doc(db, "users", u);
+  const snap = await getDoc(ref); const d = snap.data();
+  if (d.cash < amount) return toast("Yetersiz nakit.");
+  const yeni = Math.max(0, (d.debt||0)-amount);
+  await updateDoc(ref, { cash: d.cash-amount, debt: yeni });
+  log(`Borç ödendi: -${amount} TL`); await refreshAll();
+}
+
+async function refreshRanking() {
+  const q = query(collection(db,"users"), orderBy("cash","desc"), limit(20));
+  const s = await getDocs(q);
+  const box = $("rankingBox"); box.innerHTML = "";
+  let i = 1;
+  s.forEach(docu => {
+    const d = docu.data();
+    const row = document.createElement("div"); row.className = "row";
+    const renk = i===1?"yellow":i===2?"blue":i===3?"green":"";
+    row.innerHTML = `<span class="${renk}">#${i} ${d.name}</span><span>${Math.floor(d.cash)} TL</span>`;
+    box.appendChild(row); i++;
+  });
+}
+
+async function refreshAll() {
+  const u = uid(); if (!u) return;
+  const ref = doc(db, "users", u);
+  const snap = await getDoc(ref); const d = snap.data();
+  const prices = await getMarket();
+
+  $("statusBox").innerHTML = `
+    <div class="row"><span>Nakit</span><span class="green">${Math.floor(d.cash)} TL</span></div>
+    <div class="row"><span>Borç</span><span class="red">${Math.floor(d.debt||0)} TL</span></div>
+    <div class="row"><span>Yaş</span><span>${d.age}</span></div>
+    <div class="row"><span>Sağlık</span><span>${d.health}</span></div>
+    <div class="row"><span>Enerji</span><span>${d.energy}</span></div>
+    <div class="row"><span>Aranma</span><span class="yellow">${d.wanted||0}</span></div>
+    <div class="row"><span>Hapis</span><span>${d.jailUntil>Date.now()?"EVET":"hayır"}</span></div>`;
+
+  const ml = $("marketList"); ml.innerHTML = "";
+  COINS.forEach(c => {
+    const row = document.createElement("div"); row.className = "row";
+    row.innerHTML = `<span>${c}</span><span>${prices[c]}</span>`;
+    const b = document.createElement("button"); b.textContent="Al 100"; b.onclick = () => buyCoin(c, 100);
+    const s = document.createElement("button"); s.textContent="Sat 0.001"; s.onclick = () => sellCoin(c, 0.001);
+    row.appendChild(b); row.appendChild(s); ml.appendChild(row);
+  });
+
+  const al = $("assetList"); al.innerHTML = "";
+  const port = d.portfolio || {};
+  Object.keys(port).forEach(k => {
+    const v = port[k]; const deger = (v.amount*prices[k]).toFixed(2);
+    const row = document.createElement("div"); row.className = "row";
+    row.innerHTML = `<span>${k}: ${v.amount}</span><span class="green">${deger} TL</span>`;
+    al.appendChild(row);
+  });
+  (d.assets||[]).forEach(a => {
+    const row = document.createElement("div"); row.className = "row";
+    row.innerHTML = `<span>${a.name}</span><span>${a.buyPrice} TL</span>`;
+    al.appendChild(row);
+  });
+
+  const jl = $("jobList"); jl.innerHTML = "";
+  JOBS.forEach(j => {
+    const row = document.createElement("div"); row.className = "row";
+    row.innerHTML = `<span>${j.name} (+${j.pay})</span>`;
+    const b = document.createElement("button"); b.textContent="Çalış"; b.onclick = () => work(j.id);
+    row.appendChild(b); jl.appendChild(row);
+  });
+
+  const cl = $("crimeBox"); cl.innerHTML = "";
+  CRIMES.forEach(c => {
+    const row = document.createElement("div"); row.className = "row";
+    row.innerHTML = `<span>${c.name} (%${Math.round(c.risk*100)})</span>`;
+    const b = document.createElement("button"); b.textContent="Yap"; b.onclick = () => commitCrime(c.id);
+    row.appendChild(b); cl.appendChild(row);
+  });
+
+  const cl2 = $("creditBox"); cl2.innerHTML = "";
+  ASSETS.forEach(a => {
+    const row = document.createElement("div"); row.className = "row";
+    row.innerHTML = `<span>${a.name}</span><span>${a.price} TL</span>`;
+    const b = document.createElement("button"); b.textContent="Al"; b.onclick = () => buyAsset(a.id);
+    row.appendChild(b); cl2.appendChild(row);
+  });
+  const l1 = document.createElement("button"); l1.textContent="1000 TL Kredi Çek"; l1.onclick = () => takeLoan(1000);
+  const l2 = document.createElement("button"); l2.textContent="1000 TL Borç Öde"; l2.onclick = () => payDebt(1000);
+  cl2.appendChild(l1); cl2.appendChild(l2);
+
+  await refreshRanking();
+}
+
+setInterval(async () => {
+  if (!uid()) return;
+  const ref = doc(db, "users", uid());
+  const snap = await getDoc(ref); const d = snap.data();
+  await updateDoc(ref, { energy: Math.min(100, (d.energy||0)+5) });
+  await refreshAll();
+}, 60000);
+</script>
+</body>
+</html>
