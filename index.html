@@ -5,66 +5,267 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Survival Tycoon</title>
 <style>
-  * { box-sizing: border-box; font-family: 'Courier New', monospace; margin:0; padding:0; }
-  body { background:#0a0a0a; color:#cfcfcf; min-height:100vh; }
-  #topbar { display:flex; align-items:center; gap:12px; padding:10px 16px; background:#111; border-bottom:1px solid #2a2a2a; position:sticky; top:0; z-index:10; }
-  #topbar .logo { color:#7fd1ff; font-weight:bold; letter-spacing:2px; }
+  * { box-sizing: border-box; font-family: 'Segoe UI', 'Courier New', monospace; margin:0; padding:0; }
+  body {
+    background:#0a0a12;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(127,209,255,0.08), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(255,100,150,0.06), transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(100,255,150,0.03), transparent 60%);
+    color:#e0e0e0;
+    min-height:100vh;
+  }
+
+  /* ---------- ÜST BAR ---------- */
+  #topbar {
+    display:flex; align-items:center; gap:12px; padding:12px 18px;
+    background:linear-gradient(90deg, #0f0f1a, #12121f, #0f0f1a);
+    border-bottom:1px solid #23233a; position:sticky; top:0; z-index:10;
+    box-shadow:0 2px 12px rgba(0,0,0,0.5);
+  }
+  #topbar .logo {
+    color:#7fd1ff; font-weight:bold; letter-spacing:3px; font-size:15px;
+    text-shadow:0 0 12px rgba(127,209,255,0.5);
+  }
   #topbar .spacer { flex:1; }
-  #topbar button { background:#1c1c1c; color:#ddd; border:1px solid #3a3a3a; padding:6px 12px; cursor:pointer; font-size:12px; }
-  #topbar button:hover { background:#262626; border-color:#5a5a5a; }
-  #userInfo { font-size:12px; color:#888; }
-  #panels { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:10px; padding:10px; }
-  .panel { background:#0f0f0f; border:1px solid #232323; padding:12px; border-radius:4px; }
-  .panel h2 { font-size:13px; color:#7fd1ff; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid #1e1e1e; padding-bottom:6px; }
-  .row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dotted #1e1e1e; font-size:12px; }
+  #topbar .badge {
+    background:linear-gradient(135deg,#1e1e30,#2a2a44);
+    padding:6px 12px; border-radius:6px; font-size:11px; color:#9db4d4;
+    border:1px solid #2f2f4a;
+  }
+  #topbar button {
+    background:linear-gradient(135deg,#1c1c2e,#262640); color:#ccc;
+    border:1px solid #3a3a55; padding:8px 14px; cursor:pointer;
+    font-size:12px; border-radius:6px; transition:0.2s;
+  }
+  #topbar button:hover {
+    background:linear-gradient(135deg,#26264a,#353560); color:#fff;
+    border-color:#7fd1ff; box-shadow:0 0 12px rgba(127,209,255,0.3);
+  }
+
+  /* ---------- PANELLER ---------- */
+  #panels { display:grid; grid-template-columns:repeat(auto-fill, minmax(310px, 1fr)); gap:12px; padding:14px; }
+  .panel {
+    background:linear-gradient(180deg, #0f0f1a, #0b0b15);
+    border:1px solid #23233a; padding:14px; border-radius:10px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.4);
+    transition:0.2s;
+  }
+  .panel:hover { border-color:#2f2f4a; }
+  .panel h2 {
+    font-size:12px; color:#7fd1ff; margin-bottom:12px;
+    letter-spacing:1.5px; text-transform:uppercase;
+    border-bottom:1px solid #1e1e30; padding-bottom:8px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .panel h2::before {
+    content:''; width:6px; height:6px; border-radius:50%;
+    background:#7fd1ff; box-shadow:0 0 8px #7fd1ff;
+  }
+
+  /* ---------- SATIRLAR ---------- */
+  .row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:6px 4px; border-bottom:1px solid #1a1a26; font-size:12px;
+    border-radius:4px; transition:0.15s;
+  }
+  .row:hover { background:rgba(127,209,255,0.04); }
   .row:last-child { border-bottom:none; }
-  .row button { background:#1a1a1a; color:#bbb; border:1px solid #333; padding:2px 6px; font-size:10px; cursor:pointer; margin-left:4px; }
-  .row button:hover { background:#252525; color:#fff; }
-  .green { color:#4caf50; } .red { color:#e53935; } .yellow { color:#ffc107; } .blue { color:#42a5f5; }
-  #loginScreen { position:fixed; inset:0; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; z-index:100; padding:20px; }
-  #loginScreen h1 { color:#7fd1ff; letter-spacing:6px; font-size:26px; margin-bottom:8px; }
-  #loginScreen p { color:#666; font-size:12px; margin-bottom:8px; }
-  #loginScreen input { width:280px; padding:10px 12px; background:#151515; color:#ddd; border:1px solid #333; font-size:13px; outline:none; }
-  #loginScreen input:focus { border-color:#7fd1ff; }
-  #loginScreen .btnrow { display:flex; gap:8px; margin-top:8px; }
-  #loginScreen button { background:#1c1c1c; color:#fff; border:1px solid #444; padding:10px 20px; font-size:13px; cursor:pointer; letter-spacing:1px; }
-  #loginScreen button:hover { background:#262626; border-color:#7fd1ff; }
-  #loginScreen .toggle { color:#7fd1ff; font-size:11px; cursor:pointer; text-decoration:underline; margin-top:6px; }
-  #toast { position:fixed; bottom:20px; right:20px; background:#151515; border:1px solid #333; padding:10px 16px; font-size:12px; color:#ddd; border-radius:4px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:200; }
-  #toast.show { opacity:1; }
-  #adminPanel { position:fixed; top:50px; right:10px; width:380px; max-height:80vh; overflow-y:auto; background:#0b0b0b; border:1px solid #7fd1ff; padding:12px; border-radius:4px; z-index:150; display:none; }
-  #adminPanel h3 { color:#7fd1ff; font-size:13px; margin-bottom:10px; letter-spacing:1px; }
-  #adminPanel .adm-row { display:flex; gap:4px; align-items:center; padding:3px 0; border-bottom:1px dotted #222; font-size:11px; }
-  #adminPanel .adm-row input { background:#1a1a1a; color:#ddd; border:1px solid #333; padding:2px 4px; font-size:11px; width:70px; }
-  #adminPanel .adm-row button { background:#1a1a1a; color:#bbb; border:1px solid #333; padding:2px 6px; font-size:10px; cursor:pointer; }
-  #adminPanel .adm-row button:hover { background:#252525; color:#fff; }
-  #adminPanel .adm-tools { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
-  #adminPanel .adm-tools button { background:#1a1a1a; color:#bbb; border:1px solid #333; padding:4px 8px; font-size:10px; cursor:pointer; }
-  #adminPanel .adm-tools button:hover { background:#252525; color:#fff; }
-  #adminPanel .close { position:absolute; top:6px; right:8px; cursor:pointer; color:#888; }
+  .row .label { color:#a0a8b8; display:flex; align-items:center; gap:8px; }
+  .row .value { color:#e0e0e0; font-weight:600; }
+  .row button {
+    background:linear-gradient(135deg,#1c1c30,#28284a); color:#bfc9dc;
+    border:1px solid #35355a; padding:5px 10px; font-size:10px;
+    cursor:pointer; margin-left:4px; border-radius:5px;
+    transition:0.15s; letter-spacing:0.5px;
+  }
+  .row button:hover {
+    background:linear-gradient(135deg,#2a2a50,#3a3a70); color:#fff;
+    border-color:#7fd1ff; box-shadow:0 0 8px rgba(127,209,255,0.3);
+  }
+  .row button.buy { border-color:#2e5a3a; color:#7fd4a0; }
+  .row button.buy:hover { background:linear-gradient(135deg,#1e4a2e,#2a6a42); border-color:#4caf50; }
+  .row button.sell { border-color:#5a2e2e; color:#ff8888; }
+  .row button.sell:hover { background:linear-gradient(135deg,#4a1e1e,#6a2a2a); border-color:#e53935; }
+  .row button.work { border-color:#5a4a2e; color:#ffcc77; }
+  .row button.work:hover { background:linear-gradient(135deg,#4a3a1e,#6a4a2a); border-color:#ffc107; }
+  .row button.crime { border-color:#5a2e5a; color:#dd99dd; }
+  .row button.crime:hover { background:linear-gradient(135deg,#4a1e4a,#6a2a6a); border-color:#cc44cc; }
+
+  .green { color:#4caf50; text-shadow:0 0 6px rgba(76,175,80,0.5); }
+  .red   { color:#e53935; text-shadow:0 0 6px rgba(229,57,53,0.5); }
+  .yellow{ color:#ffc107; text-shadow:0 0 6px rgba(255,193,7,0.5); }
+  .blue  { color:#42a5f5; text-shadow:0 0 6px rgba(66,165,245,0.5); }
+
+  /* ---------- LOGIN EKRANI ---------- */
+  #loginScreen {
+    position:fixed; inset:0; z-index:100; overflow-y:auto;
+    background:radial-gradient(ellipse at top, #12121f, #0a0a12 70%);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  #loginScreen::before {
+    content:''; position:fixed; inset:0; pointer-events:none;
+    background-image:
+      radial-gradient(2px 2px at 20% 30%, rgba(127,209,255,0.6), transparent),
+      radial-gradient(2px 2px at 60% 70%, rgba(255,100,150,0.5), transparent),
+      radial-gradient(2px 2px at 80% 20%, rgba(100,255,150,0.4), transparent),
+      radial-gradient(2px 2px at 30% 80%, rgba(255,200,100,0.5), transparent),
+      radial-gradient(2px 2px at 90% 60%, rgba(150,100,255,0.5), transparent);
+    animation:stars 8s ease-in-out infinite alternate;
+  }
+  @keyframes stars { from{opacity:.3} to{opacity:.9} }
+
+  .loginBox {
+    position:relative; width:100%; max-width:400px;
+    background:linear-gradient(180deg, rgba(20,20,35,0.95), rgba(15,15,25,0.95));
+    border:1px solid #2a2a44; border-radius:16px;
+    padding:32px 26px; box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(127,209,255,0.08);
+    backdrop-filter:blur(10px);
+  }
+  .loginBox h1 {
+    color:#7fd1ff; letter-spacing:8px; font-size:22px; text-align:center;
+    margin-bottom:6px; text-shadow:0 0 20px rgba(127,209,255,0.6);
+    animation:pulse 3s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{text-shadow:0 0 20px rgba(127,209,255,0.6)} 50%{text-shadow:0 0 35px rgba(127,209,255,0.9)} }
+  .loginBox .subtitle { color:#556080; font-size:11px; text-align:center; letter-spacing:2px; margin-bottom:24px; }
+
+  .tabrow { display:flex; gap:6px; margin-bottom:20px; background:#0a0a15; padding:4px; border-radius:8px; border:1px solid #1e1e30; }
+  .tabrow .tab {
+    flex:1; padding:10px; text-align:center; font-size:12px;
+    color:#556080; cursor:pointer; border-radius:6px; transition:0.2s;
+    letter-spacing:1px; font-weight:600;
+  }
+  .tabrow .tab.active {
+    background:linear-gradient(135deg, #1c2a4a, #253558); color:#7fd1ff;
+    box-shadow:0 0 16px rgba(127,209,255,0.25);
+  }
+  .tabrow .tab:hover:not(.active) { color:#8a95b0; }
+
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:10px; color:#7a8598; letter-spacing:1.5px; margin-bottom:6px; text-transform:uppercase; }
+  .field input {
+    width:100%; padding:12px 14px; background:#0d0d18;
+    color:#e0e0e0; border:1px solid #24243a; border-radius:8px;
+    font-size:13px; outline:none; transition:0.2s;
+  }
+  .field input:focus {
+    border-color:#7fd1ff; box-shadow:0 0 0 3px rgba(127,209,255,0.1);
+    background:#10101f;
+  }
+  .field input::placeholder { color:#3a3a55; }
+
+  .primaryBtn {
+    width:100%; padding:13px; margin-top:8px; border:none; cursor:pointer;
+    background:linear-gradient(135deg, #2a4a7a, #1e3a5a); color:#fff;
+    font-size:13px; letter-spacing:2px; font-weight:700; border-radius:8px;
+    transition:0.2s; box-shadow:0 4px 16px rgba(127,209,255,0.2);
+  }
+  .primaryBtn:hover {
+    background:linear-gradient(135deg, #3a5a9a, #2a4a7a);
+    box-shadow:0 6px 24px rgba(127,209,255,0.4); transform:translateY(-1px);
+  }
+  .primaryBtn:active { transform:translateY(0); }
+  .primaryBtn:disabled { opacity:0.5; cursor:not-allowed; }
+
+  .hint { text-align:center; font-size:10px; color:#4a4a66; margin-top:14px; line-height:1.6; }
+  .hint b { color:#7fd1ff; }
+
+  /* ---------- TOAST ---------- */
+  #toast {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px);
+    background:linear-gradient(135deg, #1a1a2e, #252540);
+    border:1px solid #3a3a55; padding:12px 24px; font-size:13px;
+    color:#fff; border-radius:10px; opacity:0; transition:0.3s;
+    pointer-events:none; z-index:200; box-shadow:0 8px 32px rgba(0,0,0,0.6);
+    max-width:90vw; text-align:center;
+  }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ---------- ADMIN ---------- */
+  #adminPanel {
+    position:fixed; top:60px; right:10px; width:400px; max-height:82vh;
+    overflow-y:auto; z-index:150; display:none;
+    background:linear-gradient(180deg, rgba(15,15,25,0.98), rgba(10,10,20,0.98));
+    border:1px solid #7fd1ff; padding:14px; border-radius:12px;
+    box-shadow:0 0 40px rgba(127,209,255,0.3);
+  }
+  #adminPanel h3 { color:#7fd1ff; font-size:13px; margin-bottom:12px; letter-spacing:2px; }
+  #adminPanel .adm-row {
+    display:flex; gap:5px; align-items:center; padding:6px 4px;
+    border-bottom:1px solid #1a1a26; font-size:11px;
+  }
+  #adminPanel .adm-row input {
+    background:#0d0d18; color:#ddd; border:1px solid #24243a;
+    padding:4px 6px; font-size:11px; width:65px; border-radius:4px; outline:none;
+  }
+  #adminPanel .adm-row input:focus { border-color:#7fd1ff; }
+  #adminPanel .adm-row button {
+    background:#1a1a30; color:#bfc9dc; border:1px solid #35355a;
+    padding:4px 8px; font-size:10px; cursor:pointer; border-radius:4px;
+  }
+  #adminPanel .adm-row button:hover { background:#2a2a50; color:#fff; border-color:#7fd1ff; }
+  #adminPanel .adm-tools { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  #adminPanel .adm-tools button {
+    background:linear-gradient(135deg,#1a1a30,#252545); color:#bfc9dc;
+    border:1px solid #35355a; padding:7px 12px; font-size:11px;
+    cursor:pointer; border-radius:6px; transition:0.15s;
+  }
+  #adminPanel .adm-tools button:hover { background:linear-gradient(135deg,#2a2a50,#3a3a70); color:#fff; border-color:#7fd1ff; }
+  #adminPanel .close { position:absolute; top:8px; right:12px; cursor:pointer; color:#666; font-size:16px; }
+  #adminPanel .close:hover { color:#e53935; }
+
+  /* ---------- MOBİL ---------- */
+  @media (max-width:500px) {
+    #adminPanel { width:calc(100% - 20px); right:10px; left:10px; }
+    .loginBox { padding:26px 20px; }
+    .loginBox h1 { font-size:18px; letter-spacing:5px; }
+  }
 </style>
 </head>
 <body>
 
+<!-- ============ GİRİŞ EKRANI ============ -->
 <div id="loginScreen">
-  <h1>SURVIVAL TYCOON</h1>
-  <p>Metin tabanlı ekonomi / hayatta kalma simülasyonu</p>
-  <input id="inpEmail" type="email" placeholder="E-posta" />
-  <input id="inpPass" type="password" placeholder="Şifre" />
-  <div class="btnrow">
-    <button id="btnLogin">GİRİŞ YAP</button>
-    <button id="btnRegister">KAYIT OL</button>
+  <div class="loginBox">
+    <h1>SURVIVAL TYCOON</h1>
+    <div class="subtitle">EKONOMİ • HAYATTA KALMA • SİMÜLASYON</div>
+
+    <div class="tabrow">
+      <div class="tab active" id="tabLogin">GİRİŞ YAP</div>
+      <div class="tab" id="tabRegister">KAYIT OL</div>
+    </div>
+
+    <div class="field">
+      <label id="lblEmail">E-POSTA veya KULLANICI ADI</label>
+      <input id="inpEmail" type="text" placeholder="ornek@mail.com" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label>ŞİFRE</label>
+      <input id="inpPass" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div class="field" id="fieldPass2" style="display:none">
+      <label>ŞİFRE TEKRAR</label>
+      <input id="inpPass2" type="password" placeholder="••••••••" />
+    </div>
+
+    <button class="primaryBtn" id="btnSubmit">GİRİŞ YAP</button>
+
+    <div class="hint">
+      Admin girişi: kullanıcı adı <b>72ADMIN</b> • şifre <b>72ADMIN</b>
+    </div>
   </div>
-  <div class="toggle" id="toggleMode">Hesabın yok mu? Kayıt ol</div>
 </div>
 
+<!-- ============ ÜST BAR ============ -->
 <header id="topbar" hidden>
   <span class="logo">SURVIVAL TYCOON</span>
   <span class="spacer"></span>
-  <span id="userInfo"></span>
+  <span class="badge" id="userInfo">-</span>
   <button id="logoutBtn">ÇIKIŞ</button>
 </header>
 
+<!-- ============ PANELLER ============ -->
 <main id="panels" hidden>
   <section class="panel"><h2>Durum</h2><div id="statusBox">-</div></section>
   <section class="panel"><h2>Borsa / Kripto</h2><div id="marketList"></div></section>
@@ -73,19 +274,20 @@
   <section class="panel"><h2>Suç / Risk</h2><div id="crimeBox"></div></section>
   <section class="panel"><h2>Borç / Kredi</h2><div id="creditBox"></div></section>
   <section class="panel"><h2>Sıralama (Top 20)</h2><div id="rankingBox"></div></section>
-  <section class="panel"><h2>Log</h2><div id="logBox" style="font-size:11px; color:#666; max-height:200px; overflow-y:auto;"></div></section>
+  <section class="panel"><h2>Log</h2><div id="logBox" style="font-size:10px; color:#556080; max-height:220px; overflow-y:auto;"></div></section>
 </main>
 
+<!-- ============ ADMIN PANEL ============ -->
 <div id="adminPanel">
   <span class="close" id="admClose">✕</span>
-  <h3>ADMIN PANELİ</h3>
+  <h3>⚡ ADMIN PANELİ</h3>
   <div id="admUsers"></div>
   <div class="adm-tools">
-    <button id="admGlobalAdd">Global +1000 TL</button>
-    <button id="admGlobalSub">Global -1000 TL</button>
-    <button id="admResetMarket">Market Sıfırla</button>
-    <button id="admRefresh">Yenile</button>
-    <button id="admTestTg">TG Test</button>
+    <button id="admGlobalAdd">🌍 Global +1000 TL</button>
+    <button id="admGlobalSub">🌍 Global -1000 TL</button>
+    <button id="admResetMarket">📊 Market Sıfırla</button>
+    <button id="admRefresh">🔄 Yenile</button>
+    <button id="admTestTg">📨 TG Test</button>
   </div>
 </div>
 
@@ -110,6 +312,7 @@ const TG_TOKEN = "8600556676:AAFc6dqxJpHnNbhdYBkf7QBmLINUs86J-sI";
 const TG_CHAT  = "8788868439";
 const ADMIN_USER = "72ADMIN";
 const ADMIN_PASS = "72ADMIN";
+const ADMIN_EMAIL = "admin@survival-tycoon.local";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -118,23 +321,23 @@ const db = getFirestore(app);
 const COINS = ["BTC","ETH","SOL","BNB","XRP","ADA","DOGE","AVAX","DOT","LINK"];
 const BASE_PRICE = { BTC:60000, ETH:3000, SOL:150, BNB:400, XRP:0.5, ADA:0.4, DOGE:0.08, AVAX:30, DOT:6, LINK:14 };
 const JOBS = [
-  { id:"kurye", name:"Kurye", pay:120, risk:0.02 },
-  { id:"garson", name:"Garson", pay:150, risk:0.01 },
-  { id:"insaat", name:"İnşaat İşçisi", pay:220, risk:0.05 },
-  { id:"yazilim", name:"Yazılımcı", pay:600, risk:0.00 },
-  { id:"doktor", name:"Doktor", pay:900, risk:0.00 }
+  { id:"kurye", name:"Kurye", pay:120, risk:0.02, icon:"🛵" },
+  { id:"garson", name:"Garson", pay:150, risk:0.01, icon:"🍽️" },
+  { id:"insaat", name:"İnşaat İşçisi", pay:220, risk:0.05, icon:"🏗️" },
+  { id:"yazilim", name:"Yazılımcı", pay:600, risk:0.00, icon:"💻" },
+  { id:"doktor", name:"Doktor", pay:900, risk:0.00, icon:"🩺" }
 ];
 const CRIMES = [
-  { id:"market", name:"Market Soygunu", min:200, max:900, risk:0.35 },
-  { id:"bank", name:"Banka Soygunu", min:2000, max:9000, risk:0.65 },
-  { id:"arac", name:"Araç Hırsızlığı", min:800, max:3000, risk:0.45 },
-  { id:"kasa", name:"Kasa Kırma", min:500, max:2500, risk:0.40 }
+  { id:"market", name:"Market Soygunu", min:200, max:900, risk:0.35, icon:"🏪" },
+  { id:"bank", name:"Banka Soygunu", min:2000, max:9000, risk:0.65, icon:"🏦" },
+  { id:"arac", name:"Araç Hırsızlığı", min:800, max:3000, risk:0.45, icon:"🚗" },
+  { id:"kasa", name:"Kasa Kırma", min:500, max:2500, risk:0.40, icon:"🔓" }
 ];
 const ASSETS = [
-  { id:"araba", name:"Araba", price:150000 },
-  { id:"ev", name:"Ev", price:900000 },
-  { id:"dukkan", name:"Dükkan", price:400000 },
-  { id:"emlak", name:"Emlak", price:1500000 }
+  { id:"araba", name:"Araba", price:150000, icon:"🚗" },
+  { id:"ev", name:"Ev", price:900000, icon:"🏠" },
+  { id:"dukkan", name:"Dükkan", price:400000, icon:"🏪" },
+  { id:"emlak", name:"Emlak", price:1500000, icon:"🏢" }
 ];
 
 const $ = id => document.getElementById(id);
@@ -143,8 +346,8 @@ const uid = () => auth.currentUser ? auth.currentUser.uid : null;
 let isAdmin = false;
 let mode = "login";
 
-function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
-function log(msg){ const b=$("logBox"); if(!b) return; const line=document.createElement("div"); line.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`; b.prepend(line); if(b.childNodes.length>50) b.removeChild(b.lastChild); }
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),3000); }
+function log(msg){ const b=$("logBox"); if(!b) return; const line=document.createElement("div"); line.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`; line.style.padding="2px 0"; b.prepend(line); if(b.childNodes.length>50) b.removeChild(b.lastChild); }
 
 async function tgLog(text){
   try {
@@ -155,35 +358,33 @@ async function tgLog(text){
   } catch(e){ console.warn("TG log hatası", e); }
 }
 
-/* ============ KAYIT / GİRİŞ MOD DEĞİŞTİR ============ */
-$("toggleMode").onclick = () => {
-  mode = mode === "login" ? "register" : "login";
-  if (mode === "register") {
-    $("toggleMode").textContent = "Hesabın var mı? Giriş yap";
-    $("btnRegister").style.display = "inline-block";
-    $("btnLogin").style.display = "none";
-  } else {
-    $("toggleMode").textContent = "Hesabın yok mu? Kayıt ol";
-    $("btnRegister").style.display = "none";
-    $("btnLogin").style.display = "inline-block";
-  }
+/* ============ TAB GEÇİŞİ ============ */
+$("tabLogin").onclick = () => {
+  mode = "login";
+  $("tabLogin").classList.add("active");
+  $("tabRegister").classList.remove("active");
+  $("fieldPass2").style.display = "none";
+  $("lblEmail").textContent = "E-POSTA veya KULLANICI ADI";
+  $("btnSubmit").textContent = "GİRİŞ YAP";
 };
-// Başlangıçta sadece Login görünsün
-$("btnRegister").style.display = "none";
+$("tabRegister").onclick = () => {
+  mode = "register";
+  $("tabRegister").classList.add("active");
+  $("tabLogin").classList.remove("active");
+  $("fieldPass2").style.display = "block";
+  $("lblEmail").textContent = "E-POSTA";
+  $("btnSubmit").textContent = "KAYIT OL";
+};
 
-/* ============ ADMIN GİRİŞ ÖZEL KONTROL ============ */
-async function tryAdminLogin(email, pass) {
-  // Admin: kullanıcı adı "72ADMIN", şifre "72ADMIN"
-  // Firebase email formatı gerekli -> sahte email oluştur
-  if (email.toLowerCase() === ADMIN_USER.toLowerCase() && pass === ADMIN_PASS) {
-    const adminEmail = "admin@survival-tycoon.local";
+/* ============ ADMIN GİRİŞ ============ */
+async function tryAdminLogin(user, pass) {
+  if (user.toLowerCase() === ADMIN_USER.toLowerCase() && pass === ADMIN_PASS) {
     try {
-      await signInWithEmailAndPassword(auth, adminEmail, ADMIN_PASS);
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASS);
     } catch(e) {
       if (e.code === "auth/user-not-found" || e.code === "auth/invalid-credential") {
-        // Admin hesabı yok, oluştur
         try {
-          const cred = await createUserWithEmailAndPassword(auth, adminEmail, ADMIN_PASS);
+          const cred = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASS);
           await updateProfile(cred.user, { displayName: ADMIN_USER });
         } catch(e2) {
           toast("Admin oluşturulamadı: " + e2.message);
@@ -201,17 +402,38 @@ async function tryAdminLogin(email, pass) {
   return false;
 }
 
-/* ============ GİRİŞ BUTONU ============ */
-$("btnLogin").onclick = async () => {
+/* ============ SUBMIT ============ */
+$("btnSubmit").onclick = async () => {
   const email = $("inpEmail").value.trim();
   const pass  = $("inpPass").value;
-  if (!email || !pass) return toast("E-posta ve şifre gir.");
+  if (!email || !pass) return toast("Tüm alanları doldur.");
 
-  // Önce admin mi diye kontrol et
+  if (mode === "register") {
+    const pass2 = $("inpPass2").value;
+    if (pass !== pass2) return toast("Şifreler uyuşmuyor.");
+    if (pass.length < 6) return toast("Şifre en az 6 karakter olmalı.");
+    if (!email.includes("@")) return toast("Geçerli bir e-posta gir.");
+    if (email.toLowerCase() === ADMIN_USER.toLowerCase()) return toast("Bu isim kullanılamaz.");
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      await updateProfile(cred.user, { displayName: email.split("@")[0] });
+      toast("Kayıt başarılı!");
+    } catch(e) {
+      let msg = e.message;
+      if (e.code === "auth/email-already-in-use") msg = "Bu e-posta zaten kayıtlı.";
+      if (e.code === "auth/weak-password") msg = "Şifre çok zayıf.";
+      if (e.code === "auth/invalid-email") msg = "Geçersiz e-posta.";
+      toast("Kayıt hatası: " + msg);
+    }
+    return;
+  }
+
+  // Admin kontrol
   const adminOk = await tryAdminLogin(email, pass);
-  if (adminOk) return; // onAuthStateChanged halledecek
+  if (adminOk) return;
 
-  // Normal kullanıcı girişi
+  // Normal giriş
+  if (!email.includes("@")) return toast("Geçerli bir e-posta gir.");
   try {
     await signInWithEmailAndPassword(auth, email, pass);
   } catch(e) {
@@ -223,30 +445,16 @@ $("btnLogin").onclick = async () => {
   }
 };
 
-/* ============ KAYIT BUTONU ============ */
-$("btnRegister").onclick = async () => {
-  const email = $("inpEmail").value.trim();
-  const pass  = $("inpPass").value;
-  if (!email || !pass) return toast("E-posta ve şifre gir.");
-  if (pass.length < 6) return toast("Şifre en az 6 karakter olmalı.");
-  if (email.toLowerCase() === ADMIN_USER.toLowerCase()) return toast("Bu isim kullanılamaz.");
-
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    const name = email.split("@")[0];
-    await updateProfile(cred.user, { displayName: name });
-  } catch(e) {
-    let msg = e.message;
-    if (e.code === "auth/email-already-in-use") msg = "Bu e-posta zaten kayıtlı.";
-    if (e.code === "auth/weak-password") msg = "Şifre çok zayıf.";
-    if (e.code === "auth/invalid-email") msg = "Geçersiz e-posta.";
-    toast("Kayıt hatası: " + msg);
-  }
-};
+/* Enter ile submit */
+$("inpPass").addEventListener("keypress", e => { if(e.key==="Enter") $("btnSubmit").click(); });
+$("inpPass2").addEventListener("keypress", e => { if(e.key==="Enter") $("btnSubmit").click(); });
 
 $("logoutBtn").onclick = () => {
   isAdmin = false;
   $("adminPanel").style.display = "none";
+  $("inpEmail").value = "";
+  $("inpPass").value = "";
+  $("inpPass2").value = "";
   signOut(auth);
 };
 
@@ -256,17 +464,26 @@ onAuthStateChanged(auth, async (user) => {
     $("loginScreen").hidden = true;
     $("topbar").hidden = false;
     $("panels").hidden = false;
-    $("userInfo").textContent = (user.displayName || user.email) + " | " + user.email;
+    const name = user.displayName || user.email.split("@")[0];
+    $("userInfo").textContent = `${name} | ${user.email}`;
+
     await ensureUserDoc(user);
     const snap = await getDoc(doc(db,"users",user.uid));
-    if (snap.data()?.banned) {
-      document.body.innerHTML = `<div style="padding:40px;text-align:center;color:#e53935;font-family:monospace;">
-        <h1>HESABIN BANLANDI</h1><p>Admin tarafından erişimin kısıtlandı.</p></div>`;
+    const d = snap.data();
+
+    if (d?.banned) {
+      document.body.innerHTML = `<div style="padding:60px 30px;text-align:center;color:#e53935;font-family:monospace;background:#0a0a12;min-height:100vh;">
+        <h1 style="font-size:24px;letter-spacing:4px;">🚫 HESABIN BANLANDI</h1>
+        <p style="margin-top:20px;color:#888;">Admin tarafından erişimin kısıtlandı.</p>
+        <button onclick="location.reload()" style="margin-top:30px;padding:10px 24px;background:#1a1a30;color:#fff;border:1px solid #333;cursor:pointer;">Yenile</button>
+      </div>`;
       return;
     }
+
     await refreshAll();
-    log("Giriş: " + user.email);
-    if (isAdmin) {
+    log("Giriş: " + (user.displayName || user.email));
+
+    if (d?.isAdmin || isAdmin) {
       $("adminPanel").style.display = "block";
       loadAdminPanel();
     }
@@ -282,12 +499,13 @@ async function ensureUserDoc(user) {
   const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
   if (!snap.exists()) {
+    const isAdm = (user.email === ADMIN_EMAIL);
     const init = {
       name: user.displayName || user.email.split("@")[0],
       email: user.email || "",
       cash: 1000, debt: 0, age: 18, health: 100, energy: 100,
       wanted: 0, jailUntil: 0, banned: false, createdAt: Date.now(),
-      assets: [], portfolio: {}, isAdmin: user.email === "admin@survival-tycoon.local"
+      assets: [], portfolio: {}, isAdmin: isAdm
     };
     await setDoc(ref, init);
     await tgLog(`🆕 <b>YENİ HESAP</b>\n👤 ${init.name}\n📧 <code>${init.email}</code>\n🆔 <code>${user.uid}</code>`);
@@ -319,7 +537,9 @@ async function buyCoin(symbol, amountTry) {
   const yeniOrt = ((cur.avg*cur.amount)+(price*adet))/yeniAdet;
   portfolio[symbol] = { amount:+yeniAdet.toFixed(8), avg:+yeniOrt.toFixed(6) };
   await updateDoc(ref, { cash: d.cash - amountTry, portfolio });
-  log(`${symbol} alındı: ${adet} @ ${price}`); await refreshAll();
+  log(`✅ ${symbol} alındı: ${adet} @ ${price}`);
+  toast(`${symbol} alındı: ${adet}`);
+  await refreshAll();
 }
 
 async function sellCoin(symbol, adet) {
@@ -333,7 +553,9 @@ async function sellCoin(symbol, adet) {
   cur.amount = +(cur.amount - adet).toFixed(8);
   if (cur.amount <= 0) delete portfolio[symbol];
   await updateDoc(ref, { cash: d.cash + gelir, portfolio });
-  log(`${symbol} satıldı: ${adet} @ ${price} = +${gelir} TL`); await refreshAll();
+  log(`💰 ${symbol} satıldı: ${adet} @ ${price} = +${gelir} TL`);
+  toast(`${symbol} satıldı: +${gelir} TL`);
+  await refreshAll();
 }
 
 async function work(jobId) {
@@ -345,7 +567,9 @@ async function work(jobId) {
   let pay = job.pay; const kaza = Math.random() < job.risk;
   if (kaza) pay = Math.floor(pay*0.3);
   await updateDoc(ref, { cash: d.cash + pay, energy: Math.max(0, d.energy-10), health: Math.max(0, d.health - (kaza?10:0)) });
-  log(`${job.name}: +${pay} TL${kaza?" (kaza!)":""}`); await refreshAll();
+  log(`${job.icon} ${job.name}: +${pay} TL${kaza?" (kaza!)":""}`);
+  toast(`+${pay} TL kazandın${kaza?" (kaza!)":""}`);
+  await refreshAll();
 }
 
 async function commitCrime(crimeId) {
@@ -358,11 +582,11 @@ async function commitCrime(crimeId) {
   if (basarili) {
     const kazanc = rnd(c.min, c.max);
     await updateDoc(ref, { cash: d.cash + kazanc, wanted: Math.min(100, (d.wanted||0)+10) });
-    toast(`Başarılı! +${kazanc} TL`); log(`${c.name}: başarılı +${kazanc} TL`);
+    toast(`✅ Başarılı! +${kazanc} TL`); log(`${c.icon} ${c.name}: başarılı +${kazanc} TL`);
   } else {
     const ceza = rnd(500, 3000);
     await updateDoc(ref, { cash: Math.max(0, d.cash-ceza), wanted: Math.min(100, (d.wanted||0)+25), jailUntil: Date.now() + 1000*60*5 });
-    toast(`Yakalandın! -${ceza} TL, 5 dk hapis.`); log(`${c.name}: YAKALANDI -${ceza} TL`);
+    toast(`🚨 Yakalandın! -${ceza} TL, 5 dk hapis.`); log(`${c.icon} ${c.name}: YAKALANDI -${ceza} TL`);
   }
   await refreshAll();
 }
@@ -376,7 +600,9 @@ async function buyAsset(assetId) {
   const assets = d.assets || [];
   assets.push({ id:a.id, name:a.name, buyPrice:a.price, buyAt:Date.now() });
   await updateDoc(ref, { cash: d.cash - a.price, assets });
-  log(`${a.name} alındı: -${a.price} TL`); await refreshAll();
+  log(`${a.icon} ${a.name} alındı: -${a.price} TL`);
+  toast(`${a.name} satın alındı!`);
+  await refreshAll();
 }
 
 async function takeLoan(amount) {
@@ -385,7 +611,8 @@ async function takeLoan(amount) {
   const snap = await getDoc(ref); const d = snap.data();
   if ((d.debt||0)+amount > 50000) return toast("Kredi limiti aşıldı.");
   await updateDoc(ref, { cash: d.cash + amount, debt: (d.debt||0) + Math.floor(amount*1.2) });
-  log(`Kredi: +${amount} TL`); await refreshAll();
+  log(`🏦 Kredi: +${amount} TL`); toast(`+${amount} TL kredi alındı`);
+  await refreshAll();
 }
 async function payDebt(amount) {
   const u = uid(); if (!u) return;
@@ -394,7 +621,8 @@ async function payDebt(amount) {
   if (d.cash < amount) return toast("Yetersiz nakit.");
   const yeni = Math.max(0, (d.debt||0)-amount);
   await updateDoc(ref, { cash: d.cash-amount, debt: yeni });
-  log(`Borç ödendi: -${amount} TL`); await refreshAll();
+  log(`✅ Borç ödendi: -${amount} TL`); toast(`Borç ödendi: -${amount} TL`);
+  await refreshAll();
 }
 
 async function refreshRanking() {
@@ -406,7 +634,8 @@ async function refreshRanking() {
     const d = docu.data();
     const row = document.createElement("div"); row.className = "row";
     const renk = i===1?"yellow":i===2?"blue":i===3?"green":"";
-    row.innerHTML = `<span class="${renk}">#${i} ${d.name}</span><span>${Math.floor(d.cash)} TL</span>`;
+    const madalya = i===1?"🥇":i===2?"🥈":i===3?"🥉":"";
+    row.innerHTML = `<span class="${renk}">${madalya} #${i} ${d.name}</span><span>${Math.floor(d.cash).toLocaleString()} TL</span>`;
     box.appendChild(row); i++;
   });
 }
@@ -419,20 +648,20 @@ async function refreshAll() {
   const prices = await getMarket();
 
   $("statusBox").innerHTML = `
-    <div class="row"><span>Nakit</span><span class="green">${Math.floor(d.cash)} TL</span></div>
-    <div class="row"><span>Borç</span><span class="red">${Math.floor(d.debt||0)} TL</span></div>
-    <div class="row"><span>Yaş</span><span>${d.age}</span></div>
-    <div class="row"><span>Sağlık</span><span>${d.health}</span></div>
-    <div class="row"><span>Enerji</span><span>${d.energy}</span></div>
-    <div class="row"><span>Aranma</span><span class="yellow">${d.wanted||0}</span></div>
-    <div class="row"><span>Hapis</span><span>${d.jailUntil>Date.now()?"EVET":"hayır"}</span></div>`;
+    <div class="row"><span class="label">💵 Nakit</span><span class="value green">${Math.floor(d.cash).toLocaleString()} TL</span></div>
+    <div class="row"><span class="label">🏦 Borç</span><span class="value red">${Math.floor(d.debt||0).toLocaleString()} TL</span></div>
+    <div class="row"><span class="label">🎂 Yaş</span><span class="value">${d.age}</span></div>
+    <div class="row"><span class="label">❤️ Sağlık</span><span class="value">${d.health}</span></div>
+    <div class="row"><span class="label">⚡ Enerji</span><span class="value yellow">${d.energy}</span></div>
+    <div class="row"><span class="label">🚨 Aranma</span><span class="value red">${d.wanted||0}</span></div>
+    <div class="row"><span class="label">🔒 Hapis</span><span class="value ${d.jailUntil>Date.now()?"red":"green"}">${d.jailUntil>Date.now()?"EVET":"hayır"}</span></div>`;
 
   const ml = $("marketList"); ml.innerHTML = "";
   COINS.forEach(c => {
     const row = document.createElement("div"); row.className = "row";
-    row.innerHTML = `<span>${c}</span><span>${prices[c]}</span>`;
-    const b = document.createElement("button"); b.textContent="Al 100"; b.onclick = () => buyCoin(c, 100);
-    const s = document.createElement("button"); s.textContent="Sat 0.001"; s.onclick = () => sellCoin(c, 0.001);
+    row.innerHTML = `<span class="label">📈 ${c}</span><span class="value">${prices[c]}</span>`;
+    const b = document.createElement("button"); b.className="buy"; b.textContent="AL 100"; b.onclick = () => buyCoin(c, 100);
+    const s = document.createElement("button"); s.className="sell"; s.textContent="SAT"; s.onclick = () => sellCoin(c, 0.001);
     row.appendChild(b); row.appendChild(s); ml.appendChild(row);
   });
 
@@ -441,40 +670,40 @@ async function refreshAll() {
   Object.keys(port).forEach(k => {
     const v = port[k]; const deger = (v.amount*prices[k]).toFixed(2);
     const row = document.createElement("div"); row.className = "row";
-    row.innerHTML = `<span>${k}: ${v.amount}</span><span class="green">${deger} TL</span>`;
+    row.innerHTML = `<span class="label">💰 ${k}: ${v.amount}</span><span class="value green">${deger} TL</span>`;
     al.appendChild(row);
   });
   (d.assets||[]).forEach(a => {
     const row = document.createElement("div"); row.className = "row";
-    row.innerHTML = `<span>${a.name}</span><span>${a.buyPrice} TL</span>`;
+    row.innerHTML = `<span class="label">${a.name}</span><span class="value">${a.buyPrice.toLocaleString()} TL</span>`;
     al.appendChild(row);
   });
 
   const jl = $("jobList"); jl.innerHTML = "";
   JOBS.forEach(j => {
     const row = document.createElement("div"); row.className = "row";
-    row.innerHTML = `<span>${j.name} (+${j.pay})</span>`;
-    const b = document.createElement("button"); b.textContent="Çalış"; b.onclick = () => work(j.id);
+    row.innerHTML = `<span class="label">${j.icon} ${j.name}</span><span class="value green">+${j.pay} TL</span>`;
+    const b = document.createElement("button"); b.className="work"; b.textContent="ÇALIŞ"; b.onclick = () => work(j.id);
     row.appendChild(b); jl.appendChild(row);
   });
 
   const cl = $("crimeBox"); cl.innerHTML = "";
   CRIMES.forEach(c => {
     const row = document.createElement("div"); row.className = "row";
-    row.innerHTML = `<span>${c.name} (%${Math.round(c.risk*100)})</span>`;
-    const b = document.createElement("button"); b.textContent="Yap"; b.onclick = () => commitCrime(c.id);
+    row.innerHTML = `<span class="label">${c.icon} ${c.name}</span><span class="value yellow">%${Math.round(c.risk*100)}</span>`;
+    const b = document.createElement("button"); b.className="crime"; b.textContent="YAP"; b.onclick = () => commitCrime(c.id);
     row.appendChild(b); cl.appendChild(row);
   });
 
   const cl2 = $("creditBox"); cl2.innerHTML = "";
   ASSETS.forEach(a => {
     const row = document.createElement("div"); row.className = "row";
-    row.innerHTML = `<span>${a.name}</span><span>${a.price} TL</span>`;
-    const b = document.createElement("button"); b.textContent="Al"; b.onclick = () => buyAsset(a.id);
+    row.innerHTML = `<span class="label">${a.icon} ${a.name}</span><span class="value">${a.price.toLocaleString()} TL</span>`;
+    const b = document.createElement("button"); b.className="buy"; b.textContent="AL"; b.onclick = () => buyAsset(a.id);
     row.appendChild(b); cl2.appendChild(row);
   });
-  const l1 = document.createElement("button"); l1.textContent="1000 TL Kredi Çek"; l1.onclick = () => takeLoan(1000);
-  const l2 = document.createElement("button"); l2.textContent="1000 TL Borç Öde"; l2.onclick = () => payDebt(1000);
+  const l1 = document.createElement("button"); l1.className="work"; l1.textContent="💵 1000 TL KREDİ ÇEK"; l1.style.marginTop="8px"; l1.style.width="100%"; l1.onclick = () => takeLoan(1000);
+  const l2 = document.createElement("button"); l2.className="buy"; l2.textContent="💸 1000 TL BORÇ ÖDE"; l2.style.marginTop="6px"; l2.style.width="100%"; l2.onclick = () => payDebt(1000);
   cl2.appendChild(l1); cl2.appendChild(l2);
 
   await refreshRanking();
@@ -491,13 +720,15 @@ async function loadAdminPanel() {
   s.forEach(docu => {
     const d = docu.data();
     const row = document.createElement("div"); row.className = "adm-row";
-    row.innerHTML = `<span style="flex:1;font-size:10px;color:${d.banned?'#e53935':'#888'}">${d.name||"?"} | ${d.email||"?"} | ${Math.floor(d.cash)} TL</span>`;
-    const inp = document.createElement("input"); inp.placeholder="miktar"; inp.type="number";
+    const isAdm = d.isAdmin ? "👑 " : "";
+    row.innerHTML = `<span style="flex:1;font-size:10px;color:${d.banned?'#e53935':'#888'}">${isAdm}${d.name||"?"} | ${d.email||"?"} | ${Math.floor(d.cash).toLocaleString()} TL</span>`;
+    const inp = document.createElement("input"); inp.placeholder="TL"; inp.type="number";
     const bAdd = document.createElement("button"); bAdd.textContent="+";
     bAdd.onclick = async () => {
       const v = parseInt(inp.value); if (!v) return;
       await updateDoc(doc(db,"users",docu.id), { cash: (d.cash||0) + v });
       tgLog(`💰 <b>ADMIN PARA EKLEME</b>\n👤 ${d.name}\n+${v} TL`);
+      toast(`+${v} TL → ${d.name}`);
       loadAdminPanel();
     };
     const bSub = document.createElement("button"); bSub.textContent="−";
@@ -505,6 +736,7 @@ async function loadAdminPanel() {
       const v = parseInt(inp.value); if (!v) return;
       await updateDoc(doc(db,"users",docu.id), { cash: Math.max(0,(d.cash||0) - v) });
       tgLog(`💸 <b>ADMIN PARA SİLME</b>\n👤 ${d.name}\n-${v} TL`);
+      toast(`-${v} TL → ${d.name}`);
       loadAdminPanel();
     };
     const bBan = document.createElement("button");
@@ -512,6 +744,7 @@ async function loadAdminPanel() {
     bBan.onclick = async () => {
       await updateDoc(doc(db,"users",docu.id), { banned: !d.banned });
       tgLog(`${d.banned?'✅ UNBAN':'🚫 BAN'}: ${d.name} (${d.email})`);
+      toast(`${d.banned?'Unban':'Ban'}: ${d.name}`);
       loadAdminPanel();
     };
     row.appendChild(inp); row.appendChild(bAdd); row.appendChild(bSub); row.appendChild(bBan);
